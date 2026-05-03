@@ -2,17 +2,18 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Orçamentos - FRIOTEX</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        .tabs-container { margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
-        .tab-btn { padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .tabs-container { margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; overflow-x: auto; white-space: nowrap;}
+        .tab-btn { padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; flex-shrink: 0; }
         .tab-active { background: var(--primary); color: white; }
         .tab-inactive { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
         .tab-inactive:hover { background: var(--bg-surface); color: var(--text-main); }
@@ -27,6 +28,11 @@
         .input-with-icon { position: relative; }
         .input-with-icon span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
         .input-with-icon input { padding-left: 35px; }
+        
+        @media screen and (max-width: 768px) {
+            .items-header-row { display: none; }
+            .item-row { grid-template-columns: 1fr; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -43,7 +49,6 @@
             </button>
         </div>
 
-        <!-- Abas do Orçamento -->
         <div class="tabs-container">
             <button class="tab-btn tab-active" id="tab-pendentes" onclick="mudarAbaOrcamentos('pendentes')">
                 <i class="fas fa-clock"></i> Pendentes / Aguardando
@@ -102,6 +107,7 @@
                     <button type="button" class="add-item-btn" onclick="adicionarLinhaItem()">
                         <i class="fas fa-plus"></i> Adicionar Item ao Orçamento
                     </button>
+
                     <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
                         <span style="font-size: 15px; color: var(--text-muted); margin-right: 15px; text-transform: uppercase; font-weight: 600;">Total Geral:</span>
                         <strong style="font-size: 28px; color: #10b981;">R$ <span id="displayTotal">0.00</span></strong>

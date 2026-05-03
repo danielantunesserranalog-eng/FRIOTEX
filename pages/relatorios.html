@@ -2,12 +2,13 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Relatórios - FRIOTEX</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -30,14 +31,14 @@
                     <h3>Balanço Geral por Período</h3>
                 </div>
                 <div class="report-body">
-                    <div class="date-range" style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px;">
-                        <div class="input-group" style="flex: 1;">
+                    <div class="date-range" style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap;">
+                        <div class="input-group" style="flex: 1; min-width: 150px;">
                             <label>Data Início</label>
-                            <input type="date" id="dataInicio">
+                            <input type="date" id="dataInicio" style="width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-main);">
                         </div>
-                        <div class="input-group" style="flex: 1;">
+                        <div class="input-group" style="flex: 1; min-width: 150px;">
                             <label>Data Fim</label>
-                            <input type="date" id="dataFim">
+                            <input type="date" id="dataFim" style="width: 100%; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-main);">
                         </div>
                         <button class="btn-primary" onclick="gerarRelatorioPeriodo()" style="height: 42px;"><i class="fas fa-search"></i> Filtrar</button>
                     </div>
@@ -73,8 +74,8 @@
                     <div class="report-icon"><i class="fas fa-chart-line"></i></div>
                     <h3>Curva de Faturamento Anual</h3>
                 </div>
-                <div class="report-body">
-                    <canvas id="performanceChart" style="max-height: 300px; width: 100%;"></canvas>
+                <div class="report-body" style="position: relative; height: 300px; width: 100%;">
+                    <canvas id="performanceChart"></canvas>
                 </div>
             </div>
 
@@ -102,13 +103,12 @@
             <div class="report-card">
                 <div class="report-header">
                     <div class="report-icon" style="background: rgba(239, 68, 68, 0.1);"><i class="fas fa-user-ninja" style="color: var(--danger);"></i></div>
-                    <h3>Ranking de Técnicos (Faturamento)</h3>
+                    <h3>Ranking de Técnicos</h3>
                 </div>
                 <div class="report-body">
                     <div id="topTecnicos"></div>
                 </div>
             </div>
-
         </div>
     </main>
 
@@ -124,7 +124,6 @@
             
             const servicos = await getServicos();
             let filtrados = servicos;
-
             if (inicio && fim) {
                 filtrados = servicos.filter(s => s.data >= inicio && s.data <= fim);
             }
@@ -189,7 +188,6 @@
         async function gerarRelatorioSaudeFinanceira(servicos) {
             let recebido = 0;
             let pendente = 0;
-
             servicos.forEach(s => {
                 const valTotal = parseFloat(s.valor || 0);
                 let valPago = s.valor_pago !== null && s.valor_pago !== undefined ? parseFloat(s.valor_pago) : (s.status_pagamento === 'Pago' ? valTotal : 0);
@@ -228,12 +226,9 @@
         async function gerarRelatorioFormasPgto(servicos) {
             const formas = {};
             servicos.forEach(s => {
-                // Como agora forma_pagamento salva ex: "PIX (R$ 100) + Dinheiro (R$ 50)",
-                // pegamos o valor total pago para ilustrar no grafico de forma generalizada
                 let formaPrincipal = s.forma_pagamento ? s.forma_pagamento.split(' ')[0] : 'Indefinido';
                 
                 let valPago = s.valor_pago !== null && s.valor_pago !== undefined ? parseFloat(s.valor_pago) : (s.status_pagamento === 'Pago' ? parseFloat(s.valor||0) : 0);
-
                 if(valPago > 0) {
                     formas[formaPrincipal] = (formas[formaPrincipal] || 0) + valPago;
                 }
@@ -276,7 +271,7 @@
                             <span class="badge">${dados.count} serviços</span>
                         </div>
                         <div class="result-item-details">
-                            <span>  Total Gerado: R$ ${dados.total.toFixed(2)}</span>
+                            <span>➡️ Total Gerado: R$ ${dados.total.toFixed(2)}</span>
                         </div>
                     </div>
                 `;
@@ -412,6 +407,7 @@
             const hoje = new Date();
             const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
             const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
+
             document.getElementById('dataInicio').value = primeiroDia;
             document.getElementById('dataFim').value = ultimoDia;
 

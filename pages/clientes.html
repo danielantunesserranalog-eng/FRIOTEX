@@ -2,12 +2,13 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Clientes - FRIOTEX</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -23,7 +24,6 @@
                 <i class="fas fa-plus"></i> Novo Cliente
             </button>
         </div>
-
         <div class="filters-section">
             <div class="search-box">
                 <i class="fas fa-search"></i>
@@ -38,7 +38,6 @@
                 </button>
             </div>
         </div>
-
         <div class="table-container">
             <table>
                 <thead>
@@ -54,7 +53,6 @@
             </table>
         </div>
     </main>
-
     <div id="clienteModal" class="modal">
         <div class="modal-content modal-large">
             <div class="modal-header">
@@ -89,7 +87,6 @@
                         <small style="color: #a0aec0; font-size: 11px;">Digite o CEP para buscar automaticamente</small>
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label>Rua / Logradouro</label>
@@ -100,7 +97,6 @@
                         <input type="text" id="numero" placeholder="123 ou S/N">
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label>Bairro</label>
@@ -128,7 +124,6 @@
             </form>
         </div>
     </div>
-
     <script src="../js/database.js"></script>
     <script src="../js/menu.js"></script>
     <script src="../js/clientes.js"></script>

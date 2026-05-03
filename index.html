@@ -2,12 +2,13 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FRIOTEX - Sistema de Refrigeração</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -165,6 +166,7 @@
             let faturamentoTotal = 0;
             let totalPendente = 0;
             let qtdServicosComValor = 0;
+
             servicos.forEach(s => {
                 const valTotal = parseFloat(s.valor || 0);
                 if (valTotal > 0) qtdServicosComValor++;
@@ -172,14 +174,17 @@
                 if (s.data && s.data.startsWith(mesAtual)) {
                     faturamentoMes += valTotal;
                 }
+
                 let valPago = s.valor_pago !== null && s.valor_pago !== undefined ? parseFloat(s.valor_pago) : (s.status_pagamento === 'Pago' ? valTotal : 0);
                 if(valPago > valTotal) valPago = valTotal;
                 
                 let valPendente = valTotal - valPago;
                 if(valPendente < 0) valPendente = 0;
+
                 faturamentoTotal += valPago;
                 totalPendente += valPendente;
             });
+
             document.getElementById('total-clientes').textContent = clientes.length;
             document.getElementById('servicos-andamento').textContent = servicos.filter(s => s.status !== 'Concluído').length;
             
@@ -209,8 +214,10 @@
                     </tr>
                 `).join('');
             }
+
             desenharGraficoDashboard(servicos);
         }
+
         function desenharGraficoDashboard(servicos) {
             const meses = {};
             const ultimos6Meses = [];
@@ -223,6 +230,7 @@
                 ultimos6Meses.push({ chave, nome: nomeMes, total: 0 });
                 meses[chave] = 0;
             }
+
             servicos.forEach(s => {
                 if(!s.data) return;
                 const mesServico = s.data.substring(0, 7);
@@ -230,8 +238,10 @@
                     meses[mesServico] += parseFloat(s.valor || 0);
                 }
             });
+
             const labels = ultimos6Meses.map(m => m.nome);
             const dados = ultimos6Meses.map(m => meses[m.chave]);
+
             const ctx = document.getElementById('dashboardChart').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
@@ -246,15 +256,15 @@
                         borderRadius: 4
                     }]
                 },
-                options: {
-                     responsive: true,
-                     maintainAspectRatio: false,
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: {
-                         y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
                         x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                    }
-                 }
+                    } 
+                }
             });
         }
         
@@ -264,7 +274,6 @@
     </script>
     
     <script>
-        // --- LÓGICA DA TELA DE TROCA DE SENHA OBRIGATÓRIA ---
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('precisaTrocarSenha') === 'true') {
                 document.getElementById('trocarSenhaModal').style.display = 'block';
@@ -286,7 +295,6 @@
             btn.disabled = true;
 
             try {
-                // Transforma a nova senha em Criptografia
                 const msgBuffer = new TextEncoder().encode(senha1);
                 const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
                 const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -294,12 +302,9 @@
 
                 const userId = localStorage.getItem('userId');
                 
-                // Salva no banco de dados
                 await atualizarSenhaUsuario(userId, hashFinal);
-
                 alert('Senha alterada com sucesso! Bem-vindo.');
                 
-                // Remove as travas e libera o sistema
                 localStorage.removeItem('precisaTrocarSenha');
                 document.getElementById('trocarSenhaModal').style.display = 'none';
                 

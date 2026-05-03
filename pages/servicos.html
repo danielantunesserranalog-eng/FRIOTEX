@@ -2,16 +2,17 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Serviços - FRIOTEX</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/menu.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .tabs-container { margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
-        .tab-btn { padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .tabs-container { margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; overflow-x: auto; white-space: nowrap; }
+        .tab-btn { padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; flex-shrink: 0; }
         .tab-active { background: var(--primary); color: white; }
         .tab-inactive { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
         .tab-inactive:hover { background: var(--bg-surface); color: var(--text-main); }
@@ -29,7 +30,6 @@
                 <i class="fas fa-plus"></i> Novo Serviço
             </button>
         </div>
-
         <div class="tabs-container">
             <button class="tab-btn tab-active" id="tab-ativos" onclick="mudarAbaServicos('ativos')">
                 <i class="fas fa-clock"></i> Em Andamento
@@ -125,7 +125,7 @@
         </div>
     </div>
 
-    <!-- Modal de Conclusão de Serviço Multi-Pagamentos -->
+    <!-- Modal de Conclusão de Serviço -->
     <div id="concluirModal" class="modal">
         <div class="modal-content modal-large">
             <div class="modal-header">
@@ -143,9 +143,7 @@
 
                     <h4 style="margin-bottom: 15px; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Pagamentos Recebidos Agora</h4>
                     
-                    <div id="container-pgtos" style="margin-bottom: 10px;">
-                        <!-- JavaScript injeta as linhas de pagamento aqui -->
-                    </div>
+                    <div id="container-pgtos" style="margin-bottom: 10px;"></div>
                     
                     <button type="button" class="btn-secondary" style="width: 100%; justify-content: center; margin-bottom: 20px; border: 1px dashed var(--border-color);" onclick="adicionarLinhaPgto(0)">
                         <i class="fas fa-plus"></i> Adicionar Outra Forma de Pagamento
