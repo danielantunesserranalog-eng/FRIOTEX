@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // TRAVA DE SEGURANÇA: Verifica se a pessoa está logada
+    // Só faz a verificação se NÃO estiver na página de login para evitar loop
+    const currentPath = window.location.pathname;
+    if (!currentPath.includes('login.html')) {
+        if (!localStorage.getItem('usuarioLogado')) {
+            fazerLogout(); // Expulsa para a tela de login
+            return;
+        }
+    }
+    
     carregarMenu();
     destacarMenuAtivo();
 });

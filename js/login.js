@@ -42,21 +42,26 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         // Compara a senha do banco com a digitada
         if (usuario.hash_da_senha === hashDigitado) {
             
-            // Login com sucesso! Salva a sessão no LocalStorage
-            localStorage.setItem('usuarioLogado', usuario.nome_de_usuario);
-            localStorage.setItem('userRole', usuario.papel);
-
-            // Verifica se é o primeiro acesso e obriga a troca da senha
-            if (usuario.deve_alterar_senha) {
-                alert('Este é seu primeiro acesso ou sua senha foi resetada. Você precisará criar uma nova senha.');
-                // Se quiser criar a tela de troca de senha depois, mude o caminho abaixo:
-                // window.location.href = 'trocar_senha.html';
-                
-                // Por enquanto, apenas deixa passar para o index
-                window.location.href = 'index.html'; 
+            // 1. Pega a permissão (tenta 'papel' e 'role' por segurança)
+            let papelDoBanco = usuario.papel || usuario.role || 'Técnico';
+            
+            // 2. Padroniza a palavra EXATAMENTE como o menu.js exige
+            if (papelDoBanco.toUpperCase() === 'ADMIN') {
+                papelDoBanco = 'Admin';
             } else {
-                window.location.href = 'index.html';
+                papelDoBanco = 'Técnico';
             }
+
+            // 3. Salva a sessão no LocalStorage
+            localStorage.setItem('usuarioLogado', usuario.nome_de_usuario);
+            localStorage.setItem('userRole', papelDoBanco);
+
+            // Verifica se é o primeiro acesso
+            if (usuario.deve_alterar_senha) {
+                alert('Este é seu primeiro acesso ou sua senha foi resetada. Troque sua senha em breve!');
+            } 
+            
+            window.location.href = 'index.html';
 
         } else {
             alert('Senha incorreta!');
