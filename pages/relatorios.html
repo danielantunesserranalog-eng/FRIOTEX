@@ -22,37 +22,35 @@
             </div>
         </div>
 
-        <div class="reports-grid" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+        <div class="reports-grid">
             
-            <!-- Relatório por Período -->
             <div class="report-card" style="grid-column: 1 / -1;">
                 <div class="report-header">
                     <div class="report-icon"><i class="fas fa-calendar-alt"></i></div>
                     <h3>Balanço Geral por Período</h3>
                 </div>
-                <div class="report-body" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-                    <div class="date-range" style="display: flex; gap: 15px; align-items: flex-end; flex: 1; min-width: 300px;">
+                <div class="report-body">
+                    <div class="date-range" style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px;">
                         <div class="input-group" style="flex: 1;">
-                            <label style="color: var(--text-muted); font-size: 13px; margin-bottom: 5px; display: block;">Data Início</label>
-                            <input type="date" id="dataInicio" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);">
+                            <label>Data Início</label>
+                            <input type="date" id="dataInicio">
                         </div>
                         <div class="input-group" style="flex: 1;">
-                            <label style="color: var(--text-muted); font-size: 13px; margin-bottom: 5px; display: block;">Data Fim</label>
-                            <input type="date" id="dataFim" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);">
+                            <label>Data Fim</label>
+                            <input type="date" id="dataFim">
                         </div>
                         <button class="btn-primary" onclick="gerarRelatorioPeriodo()" style="height: 42px;"><i class="fas fa-search"></i> Filtrar</button>
                     </div>
-                    <div id="relatorioPeriodo" style="flex: 2; min-width: 400px;">
-                        <p style="color: var(--text-muted); font-size: 14px;">Selecione um período para ver o balanço.</p>
+                    <div id="relatorioPeriodo" class="report-results">
+                        <p style="color: var(--text-muted);">Selecione um período para ver o balanço.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Financeiro: Recebido vs A Receber -->
             <div class="report-card">
                 <div class="report-header">
                     <div class="report-icon" style="background: rgba(16, 185, 129, 0.1);"><i class="fas fa-hand-holding-usd" style="color: var(--success);"></i></div>
-                    <h3>Saúde Financeira (Geral)</h3>
+                    <h3>Saúde Financeira</h3>
                 </div>
                 <div class="report-body text-center">
                     <canvas id="financeiroChart" style="max-height: 250px; margin: 0 auto;"></canvas>
@@ -60,7 +58,6 @@
                 </div>
             </div>
 
-            <!-- Formas de Pagamento -->
             <div class="report-card">
                 <div class="report-header">
                     <div class="report-icon" style="background: rgba(139, 92, 246, 0.1);"><i class="fas fa-credit-card" style="color: #8b5cf6;"></i></div>
@@ -71,7 +68,6 @@
                 </div>
             </div>
 
-            <!-- Performance Mensal (Linha) -->
             <div class="report-card" style="grid-column: 1 / -1;">
                 <div class="report-header">
                     <div class="report-icon"><i class="fas fa-chart-line"></i></div>
@@ -82,7 +78,6 @@
                 </div>
             </div>
 
-            <!-- Análise por Tipo de Serviço -->
             <div class="report-card">
                 <div class="report-header">
                     <div class="report-icon"><i class="fas fa-chart-pie"></i></div>
@@ -94,7 +89,6 @@
                 </div>
             </div>
 
-            <!-- Top Clientes -->
             <div class="report-card">
                 <div class="report-header">
                     <div class="report-icon" style="background: rgba(245, 158, 11, 0.1);"><i class="fas fa-crown" style="color: var(--warning);"></i></div>
@@ -105,7 +99,6 @@
                 </div>
             </div>
 
-            <!-- Top Técnicos (NOVO) -->
             <div class="report-card">
                 <div class="report-header">
                     <div class="report-icon" style="background: rgba(239, 68, 68, 0.1);"><i class="fas fa-user-ninja" style="color: var(--danger);"></i></div>
@@ -123,7 +116,6 @@
     <script src="../js/menu.js"></script>
     
     <script>
-        // Instâncias globais dos gráficos para evitar bugs de sobreposição
         let tipoChart, performanceChart, financeiroChart, pgtoChart;
         
         async function gerarRelatorioPeriodo() {
@@ -153,22 +145,34 @@
             const taxa = totalServicos > 0 ? ((concluidos/totalServicos)*100).toFixed(0) : 0;
 
             const html = `
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div style="background: var(--bg-input); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <span style="color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Serviços Totais</span>
-                        <h4 style="font-size: 20px; margin: 5px 0;">${totalServicos} <small style="font-size: 12px; color: var(--success);">(${taxa}% Concluídos)</small></h4>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <i class="fas fa-chart-simple"></i>
+                        <div class="result-info">
+                            <span>Serviços Totais</span>
+                            <strong>${totalServicos} <small style="font-size: 13px; color: var(--success); font-weight: normal;">(${taxa}% Concl)</small></strong>
+                        </div>
                     </div>
-                    <div style="background: var(--bg-input); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <span style="color: var(--text-muted); font-size: 12px; text-transform: uppercase;">Faturamento Criado</span>
-                        <h4 style="font-size: 20px; margin: 5px 0;">R$ ${faturamento.toFixed(2)}</h4>
+                    <div class="result-card">
+                        <i class="fas fa-dollar-sign"></i>
+                        <div class="result-info">
+                            <span>Faturamento Criado</span>
+                            <strong>R$ ${faturamento.toFixed(2)}</strong>
+                        </div>
                     </div>
-                    <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
-                        <span style="color: var(--success); font-size: 12px; text-transform: uppercase; font-weight: 600;">Já Recebido</span>
-                        <h4 style="color: var(--success); font-size: 20px; margin: 5px 0;">R$ ${recebido.toFixed(2)}</h4>
+                    <div class="result-card">
+                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                        <div class="result-info">
+                            <span style="color: var(--success);">Já Recebido</span>
+                            <strong style="color: var(--success);">R$ ${recebido.toFixed(2)}</strong>
+                        </div>
                     </div>
-                    <div style="background: rgba(245, 158, 11, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2);">
-                        <span style="color: var(--warning); font-size: 12px; text-transform: uppercase; font-weight: 600;">A Receber (Pendente)</span>
-                        <h4 style="color: var(--warning); font-size: 20px; margin: 5px 0;">R$ ${pendente.toFixed(2)}</h4>
+                    <div class="result-card">
+                        <i class="fas fa-clock" style="color: var(--warning);"></i>
+                        <div class="result-info">
+                            <span style="color: var(--warning);">A Receber</span>
+                            <strong style="color: var(--warning);">R$ ${pendente.toFixed(2)}</strong>
+                        </div>
                     </div>
                 </div>
             `;
@@ -186,8 +190,8 @@
             });
 
             document.getElementById('financeiroLegenda').innerHTML = `
-                <div><strong style="color: var(--success);">Recebido:</strong> R$ ${recebido.toFixed(2)}</div>
-                <div><strong style="color: var(--warning);">Pendente:</strong> R$ ${pendente.toFixed(2)}</div>
+                <div><strong style="color: var(--success);"><i class="fas fa-circle"></i> Recebido:</strong> R$ ${recebido.toFixed(2)}</div>
+                <div><strong style="color: var(--warning);"><i class="fas fa-circle"></i> A Receber:</strong> R$ ${pendente.toFixed(2)}</div>
             `;
 
             const ctx = document.getElementById('financeiroChart').getContext('2d');
@@ -201,10 +205,10 @@
                         data: [recebido, pendente],
                         backgroundColor: ['#10b981', '#f59e0b'],
                         borderWidth: 0,
-                        cutout: '70%'
+                        cutout: '75%'
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+                options: { responsive: true, plugins: { legend: { display: false } } }
             });
         }
 
@@ -223,7 +227,7 @@
             if (pgtoChart) pgtoChart.destroy();
             
             pgtoChart = new Chart(ctx, {
-                type: 'polarArea',
+                type: 'pie',
                 data: {
                     labels: labels.length > 0 ? labels : ['Sem dados'],
                     datasets: [{
@@ -232,7 +236,7 @@
                         borderWidth: 0
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#fff' } } } }
+                options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#fff', usePointStyle: true, boxWidth: 8 } } } }
             });
         }
         
@@ -247,9 +251,14 @@
             let html = '<div class="results-list" style="max-height: 200px; overflow-y: auto;">';
             for (const [tipo, dados] of Object.entries(tipos)) {
                 html += `
-                    <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--border-color); font-size: 13px;">
-                        <span><strong>${tipo}</strong> (${dados.count}x)</span>
-                        <span style="color: var(--primary); font-weight: 600;">R$ ${dados.total.toFixed(2)}</span>
+                    <div class="result-item">
+                        <div class="result-item-header">
+                            <strong>${tipo}</strong>
+                            <span class="badge">${dados.count} serviços</span>
+                        </div>
+                        <div class="result-item-details">
+                            <span>  Total: R$ ${dados.total.toFixed(2)}</span>
+                        </div>
                     </div>
                 `;
             }
@@ -269,7 +278,7 @@
                         borderWidth: 0
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#fff' } } } }
+                options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#fff', usePointStyle: true, boxWidth: 8 } } } }
             });
         }
         
@@ -286,22 +295,24 @@
             let html = '<div class="ranking-list">';
             ranking.forEach(([cliente, dados], index) => {
                 html += `
-                    <div class="ranking-item" style="display: flex; align-items: center; padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 8px;">
-                        <div style="width: 28px; height: 28px; background: ${index === 0 ? 'var(--warning)' : 'var(--bg-surface)'}; color: ${index === 0 ? '#000' : '#fff'}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 15px;">
+                    <div class="ranking-item">
+                        <div class="ranking-position" style="background: ${index === 0 ? 'var(--warning)' : 'var(--bg-surface)'}; color: ${index === 0 ? '#000' : '#fff'} !important;">
                             ${index + 1}
                         </div>
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; font-size: 14px; color: var(--text-main);">${cliente}</div>
-                            <div style="font-size: 12px; color: var(--text-muted);">${dados.count} serviços solicitados</div>
+                        <div class="ranking-info">
+                            <div class="ranking-name">${cliente}</div>
+                            <div class="ranking-stats">
+                                <span><i class="fas fa-tools"></i> ${dados.count} serviços</span>
+                                <span style="color: var(--success); font-weight: bold;"><i class="fas fa-dollar-sign"></i> R$ ${dados.total.toFixed(2)}</span>
+                            </div>
                         </div>
-                        <div style="font-weight: bold; color: var(--success);">R$ ${dados.total.toFixed(2)}</div>
                     </div>
                 `;
             });
             html += '</div>';
             document.getElementById('topClientes').innerHTML = html;
         }
-
+        
         async function gerarTopTecnicos(servicos) {
             const tecnicos = {};
             servicos.forEach(s => {
@@ -316,20 +327,24 @@
             let html = '<div class="ranking-list">';
             ranking.forEach(([tec, dados], index) => {
                 html += `
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--border-color);">
-                        <div>
-                            <span style="color: var(--danger); font-weight: 900; margin-right: 10px;">#${index+1}</span>
-                            <span style="font-weight: 500; font-size: 14px; color: var(--text-main);">${tec}</span>
-                            <span style="font-size: 12px; color: var(--text-muted); margin-left: 5px;">(${dados.count} serviços)</span>
+                    <div class="ranking-item">
+                        <div class="ranking-position" style="background: ${index === 0 ? 'var(--danger)' : 'var(--bg-surface)'}; color: ${index === 0 ? '#fff' : '#fff'} !important; border-color: var(--danger);">
+                            ${index + 1}
                         </div>
-                        <div style="font-weight: bold; color: var(--text-main);">R$ ${dados.total.toFixed(2)}</div>
+                        <div class="ranking-info">
+                            <div class="ranking-name">${tec}</div>
+                            <div class="ranking-stats">
+                                <span><i class="fas fa-tools"></i> ${dados.count} serviços</span>
+                                <span style="color: var(--text-main); font-weight: bold;"><i class="fas fa-dollar-sign"></i> R$ ${dados.total.toFixed(2)}</span>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
             html += '</div>';
             document.getElementById('topTecnicos').innerHTML = html;
         }
-        
+
         async function gerarPerformanceMensal(servicos) {
             const meses = {};
             servicos.forEach(s => {
@@ -362,7 +377,7 @@
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', labels: { color: '#fff' } } },
+                    plugins: { legend: { position: 'top', labels: { color: '#fff', usePointStyle: true } } },
                     scales: {
                         y: { type: 'linear', display: true, position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
                         y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#8b5cf6' } },
@@ -372,19 +387,16 @@
             });
         }
         
-        // Inicializar os relatórios globais na carga da página
         async function initRelatorios() {
             const servicos = await getServicos();
             
-            // Setar data no filtro inicial (Mês atual)
             const hoje = new Date();
             const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
             const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
             document.getElementById('dataInicio').value = primeiroDia;
             document.getElementById('dataFim').value = ultimoDia;
 
-            // Gera todos os relatórios usando o mesmo conjunto de dados baixado para não travar o banco
-            gerarRelatorioPeriodo(); // Esse usa o input de data
+            gerarRelatorioPeriodo();
             gerarRelatorioSaudeFinanceira(servicos);
             gerarRelatorioFormasPgto(servicos);
             gerarRelatorioTipoServico(servicos);

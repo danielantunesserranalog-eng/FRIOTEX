@@ -1,5 +1,5 @@
 :root {
-    /* Paleta Corporativa Moderna (Slate & Ocean Blue) */
+    /* Paleta Corporativa (Slate & Ocean Blue) */
     --primary: #0ea5e9;
     --primary-hover: #0284c7;
     --bg-main: #0f172a;
@@ -14,11 +14,14 @@
     --warning: #f59e0b;
     --danger: #ef4444;
     
-    /* Estrutura */
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    
+    /* Estrutura - Arredondada (Menos quadrado) */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+}
+
+/* O ERRO ESTAVA AQUI: Faltava o asterisco e as chaves! */
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -131,7 +134,7 @@ body {
 }
 
 .stat-info p {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 600;
     margin-bottom: 4px;
     color: var(--text-main);
@@ -431,7 +434,7 @@ tbody tr:hover {
     border-color: var(--primary);
 }
 
-.form-group input:disabled,
+.form-group input:disabled, 
 .form-group input[readonly] {
     background: var(--bg-main);
     color: var(--text-muted);
@@ -477,7 +480,7 @@ tbody tr:hover {
     border-color: rgba(14, 165, 233, 0.2);
 }
 
-/* Reports Grid overrides for clean look */
+/* Relatórios Grid e Cards */
 .reports-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
@@ -523,38 +526,153 @@ tbody tr:hover {
     padding: 20px;
 }
 
-.results-grid .result-card {
+/* Elementos Internos dos Relatórios */
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.result-card {
     background: var(--bg-input);
     border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.result-card i {
+    font-size: 24px;
+    color: var(--primary);
+}
+
+.result-info span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.result-info strong {
+    font-size: 18px;
+    color: var(--text-main);
 }
 
 .result-item {
     background: var(--bg-input);
     border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+}
+
+.result-item-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.result-item-details {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 13px;
 }
 
 .ranking-item {
     background: var(--bg-input);
     border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .ranking-position {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
     color: var(--text-main) !important;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
 }
 
-.progress {
-    background: var(--bg-input);
+.ranking-info {
+    flex: 1;
 }
 
-.progress-fill {
-    background: var(--primary);
+.ranking-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ranking-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-muted);
 }
 
 .badge {
     background: var(--border-color);
     color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+}
+
+.progress-bar {
+    margin-top: 20px;
+}
+
+.progress-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.progress {
+    background: var(--bg-input);
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    background: var(--primary);
+    height: 100%;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.view-all {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.view-all:hover {
+    text-decoration: underline;
 }
 
 /* Responsive */
@@ -569,6 +687,10 @@ tbody tr:hover {
     }
     
     .reports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .results-grid {
         grid-template-columns: 1fr;
     }
 }
