@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div id="menu-container"></div>
@@ -18,12 +19,62 @@
             <div class="welcome-section">
                 <div class="welcome-text">
                     <h1><i class="fas fa-snowflake"></i> Bem-vindo ao Sistema FRIOTEX</h1>
-                    <p>Gerencie seus serviços de refrigeração com eficiência e tecnologia</p>
+                    <p>Visão geral do seu negócio e indicadores de performance</p>
                 </div>
                 <div class="date-time" id="currentDateTime"></div>
             </div>
 
-            <div class="stats-grid">
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(14, 165, 233, 0.1);">
+                        <i class="fas fa-calendar-check" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Faturamento do Mês</h3>
+                        <p id="faturamento-mes">R$ 0</p>
+                        <span class="stat-trend">Serviços no mês atual</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1);">
+                        <i class="fas fa-wallet" style="color: var(--success);"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Recebido (Geral)</h3>
+                        <p id="faturamento-total" style="color: var(--success);">R$ 0</p>
+                        <span class="stat-trend">Dinheiro em caixa</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1);">
+                        <i class="fas fa-hourglass-half" style="color: var(--warning);"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Valores a Receber</h3>
+                        <p id="total-pendente" style="color: var(--warning);">R$ 0</p>
+                        <span class="stat-trend">Pagamentos pendentes</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1);">
+                        <i class="fas fa-chart-line" style="color: #8b5cf6;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Ticket Médio</h3>
+                        <p id="ticket-medio">R$ 0</p>
+                        <span class="stat-trend">Média por serviço</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Em Andamento</h3>
+                        <p id="servicos-andamento">0</p>
+                        <span class="stat-trend">Aguardando conclusão</span>
+                    </div>
+                </div>
                 <div class="stat-card">
                     <div class="stat-icon">
                         <i class="fas fa-users"></i>
@@ -31,64 +82,41 @@
                     <div class="stat-info">
                         <h3>Clientes Ativos</h3>
                         <p id="total-clientes">0</p>
-                        <span class="stat-trend"><i class="fas fa-chart-line"></i> Total Registrado</span>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-tools"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Serviços em Andamento</h3>
-                        <p id="servicos-andamento">0</p>
-                        <span class="stat-trend"><i class="fas fa-clock"></i> Em execução</span>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Serviços Concluídos</h3>
-                        <p id="servicos-concluidos">0</p>
-                        <span class="stat-trend"><i class="fas fa-check"></i> Total Histórico</span>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Faturamento</h3>
-                        <p id="faturamento">R$ 0</p>
-                        <span class="stat-trend"><i class="fas fa-arrow-up"></i> Total Recebido</span>
+                        <span class="stat-trend">Base de clientes</span>
                     </div>
                 </div>
             </div>
 
-            <div class="recent-services">
-                <div class="section-header">
-                    <h2><i class="fas fa-clock"></i> Serviços Recentes</h2>
-                    <a href="pages/servicos.html" class="view-all">Ver todos <i class="fas fa-arrow-right"></i></a>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px; margin-top: 10px;">
+                <!-- Gráfico Resumo -->
+                <div style="background: var(--bg-surface); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                    <div class="section-header" style="margin-bottom: 20px;">
+                        <h2 style="font-size: 16px; margin: 0;"><i class="fas fa-chart-bar"></i> Receitas dos Últimos 6 Meses</h2>
+                    </div>
+                    <canvas id="dashboardChart" style="max-height: 280px; width: 100%;"></canvas>
                 </div>
-                <div class="table-container">
-                    <table id="recent-services-table">
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Serviço</th>
-                                <th>Data</th>
-                                <th>Status</th>
-                                <th>Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-services-list">
-                            <tr><td colspan="5">Carregando...</td></tr>
-                        </tbody>
-                    </table>
+
+                <!-- Tabela Recentes -->
+                <div class="recent-services" style="margin: 0; background: var(--bg-surface); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                    <div class="section-header" style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <h2 style="font-size: 16px; margin: 0;"><i class="fas fa-clock"></i> Últimos Serviços Registrados</h2>
+                        <a href="pages/servicos.html" style="color: var(--primary); text-decoration: none; font-size: 13px; font-weight: 600;">Ver todos <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="table-container" style="border: none; border-radius: 0;">
+                        <table id="recent-services-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente / Serviço</th>
+                                    <th>Data</th>
+                                    <th>Status / Pagamento</th>
+                                    <th>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-services-list">
+                                <tr><td colspan="4" style="text-align: center;">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -98,6 +126,7 @@
     <script src="js/menu.js"></script>
     <script src="js/clientes.js"></script>
     <script src="js/servicos.js"></script>
+    
     <script>
         function atualizarDataHora() {
             const now = new Date();
@@ -109,31 +138,113 @@
             const clientes = await getClientes();
             const servicos = await getServicos();
             
+            const hoje = new Date();
+            const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+            
+            let faturamentoMes = 0;
+            let faturamentoTotal = 0;
+            let totalPendente = 0;
+            let qtdServicosComValor = 0;
+
+            servicos.forEach(s => {
+                const valor = parseFloat(s.valor || 0);
+                if (valor > 0) qtdServicosComValor++;
+                
+                // Mês Atual
+                if (s.data && s.data.startsWith(mesAtual)) {
+                    faturamentoMes += valor;
+                }
+
+                // Recebidos e Pendentes
+                if (s.status_pagamento === 'Pago') {
+                    faturamentoTotal += valor;
+                } else {
+                    totalPendente += valor;
+                }
+            });
+
             document.getElementById('total-clientes').textContent = clientes.length;
-            document.getElementById('servicos-andamento').textContent = servicos.filter(s => s.status === 'Em andamento').length;
-            document.getElementById('servicos-concluidos').textContent = servicos.filter(s => s.status === 'Concluído').length;
+            document.getElementById('servicos-andamento').textContent = servicos.filter(s => s.status !== 'Concluído').length;
             
-            const faturamento = servicos
-                .filter(s => s.status === 'Concluído')
-                .reduce((sum, s) => sum + parseFloat(s.valor || 0), 0);
-            document.getElementById('faturamento').textContent = `R$ ${faturamento.toFixed(2)}`;
+            document.getElementById('faturamento-mes').textContent = `R$ ${faturamentoMes.toFixed(2)}`;
+            document.getElementById('faturamento-total').textContent = `R$ ${faturamentoTotal.toFixed(2)}`;
+            document.getElementById('total-pendente').textContent = `R$ ${totalPendente.toFixed(2)}`;
             
-            const recentes = servicos.slice(0, 5); // Como o getServicos já vem ordenado desc
+            const ticketMedio = qtdServicosComValor > 0 ? ((faturamentoTotal + totalPendente) / qtdServicosComValor) : 0;
+            document.getElementById('ticket-medio').textContent = `R$ ${ticketMedio.toFixed(2)}`;
+            
+            // Desenhar Tabela Recente
+            const recentes = servicos.slice(0, 5);
             const tbody = document.getElementById('recent-services-list');
             
             if (recentes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5">Nenhum serviço recente</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4">Nenhum serviço recente</td></tr>';
             } else {
                 tbody.innerHTML = recentes.map(servico => `
                     <tr>
-                        <td><strong>${servico.clienteNome}</strong></td>
-                        <td>${servico.tipo}</td>
-                        <td>${new Date(servico.data).toLocaleDateString()}</td>
-                        <td><span class="status-badge ${servico.status === 'Concluído' ? 'status-success' : servico.status === 'Em andamento' ? 'status-warning' : 'status-info'}">${servico.status}</span></td>
-                        <td class="valor">R$ ${parseFloat(servico.valor).toFixed(2)}</td>
+                        <td><strong>${servico.clienteNome}</strong><br><small style="color:var(--text-muted)">${servico.tipo}</small></td>
+                        <td>${new Date(servico.data).toLocaleDateString('pt-BR')}</td>
+                        <td>
+                            <span class="status-badge ${servico.status === 'Concluído' ? 'status-success' : 'status-warning'}" style="margin-bottom:4px;">${servico.status}</span><br>
+                            <small style="color:${servico.status_pagamento === 'Pago' ? 'var(--success)' : 'var(--warning)'}; font-weight:600;"><i class="fas fa-dollar-sign"></i> ${servico.status_pagamento || 'Pendente'}</small>
+                        </td>
+                        <td class="valor"><strong>R$ ${parseFloat(servico.valor).toFixed(2)}</strong></td>
                     </tr>
                 `).join('');
             }
+
+            desenharGraficoDashboard(servicos);
+        }
+
+        function desenharGraficoDashboard(servicos) {
+            const meses = {};
+            const ultimos6Meses = [];
+            const hoje = new Date();
+            
+            // Preparar array com os últimos 6 meses (do mais antigo pro mais novo)
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+                const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                const nomeMes = d.toLocaleString('pt-BR', { month: 'short' }).toUpperCase();
+                ultimos6Meses.push({ chave, nome: nomeMes, total: 0 });
+                meses[chave] = 0;
+            }
+
+            servicos.forEach(s => {
+                if(!s.data) return;
+                const mesServico = s.data.substring(0, 7);
+                if (meses[mesServico] !== undefined) {
+                    meses[mesServico] += parseFloat(s.valor || 0);
+                }
+            });
+
+            const labels = ultimos6Meses.map(m => m.nome);
+            const dados = ultimos6Meses.map(m => meses[m.chave]);
+
+            const ctx = document.getElementById('dashboardChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Faturamento (R$)',
+                        data: dados,
+                        backgroundColor: 'rgba(14, 165, 233, 0.8)',
+                        borderColor: '#0ea5e9',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    } 
+                }
+            });
         }
         
         atualizarDataHora();
