@@ -1,28 +1,4 @@
 // ==========================================
-// BARREIRA DE SEGURANÇA E SESSÃO
-// ==========================================
-const currentFileName = window.location.pathname.split('/').pop() || 'index.html';
-const isPagesFolder = window.location.pathname.includes('/pages/');
-
-const loginPath = isPagesFolder ? '../login.html' : 'login.html';
-const indexPath = isPagesFolder ? '../index.html' : 'index.html';
-
-if (currentFileName !== 'login.html') {
-    const usuarioLogado = localStorage.getItem('usuarioLogado');
-    const userRole = localStorage.getItem('userRole'); 
-    
-    if (!usuarioLogado) {
-        window.location.href = loginPath;
-    } else {
-        // Bloqueia acesso administrativo para técnicos
-        if (userRole === 'Técnico' && (currentFileName === 'financeiro.html' || currentFileName === 'configuracoes.html')) {
-            alert('Acesso Negado: Área exclusiva para Administradores.');
-            window.location.href = indexPath;
-        }
-    }
-}
-
-// ==========================================
 // CONFIGURAÇÃO DO SUPABASE
 // ==========================================
 const supabaseUrl = 'https://gaflsobdfcghtvpqcrdk.supabase.co';
@@ -30,11 +6,11 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// GERENCIAMENTO DE USUÁRIOS
+// GERENCIAMENTO DE users
 // ==========================================
-async function getUsuarios() {
-    const { data, error } = await supabaseClient.from('usuarios').select('*').order('nome_de_usuario');
-    if (error) console.error('Erro ao buscar usuários:', error);
+async function getusers() {
+    const { data, error } = await supabaseClient.from('users').select('*').order('nome_de_usuario');
+    if (error) console.error('Erro ao buscar users:', error);
     return data || [];
 }
 
@@ -42,7 +18,7 @@ async function salvarUsuarioDB(usuario) {
     if (!usuario.id) {
         // Hash fixo da senha 12345
         const hashPadrao = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5';
-        const { data, error } = await supabaseClient.from('usuarios').insert([{
+        const { data, error } = await supabaseClient.from('users').insert([{
             nome_de_usuario: usuario.username.toUpperCase(),
             papel: usuario.role,
             hash_da_senha: hashPadrao,
@@ -51,7 +27,7 @@ async function salvarUsuarioDB(usuario) {
         if (error) throw error;
         return data;
     } else {
-        const { data, error } = await supabaseClient.from('usuarios').update({
+        const { data, error } = await supabaseClient.from('users').update({
             nome_de_usuario: usuario.username.toUpperCase(),
             papel: usuario.role
         }).eq('id', usuario.id).select();
@@ -62,7 +38,7 @@ async function salvarUsuarioDB(usuario) {
 
 async function resetarSenhaUsuario(id) {
     const hashPadrao = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5';
-    const { error } = await supabaseClient.from('usuarios').update({
+    const { error } = await supabaseClient.from('users').update({
         hash_da_senha: hashPadrao,
         deve_alterar_senha: true
     }).eq('id', id);
@@ -70,7 +46,7 @@ async function resetarSenhaUsuario(id) {
 }
 
 async function deletarUsuarioDB(id) {
-    const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
+    const { error } = await supabaseClient.from('users').delete().eq('id', id);
     if (error) throw error;
 }
 
