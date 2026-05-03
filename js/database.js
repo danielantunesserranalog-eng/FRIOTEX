@@ -15,7 +15,6 @@ async function getUsuarios() {
 }
 async function salvarUsuarioDB(usuario) {
     if (!usuario.id) {
-        // Hash fixo da senha 12345
         const hashPadrao = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5';
         const { data, error } = await supabaseClient.from('users').insert([{
             nome_de_usuario: usuario.username.toUpperCase(),
@@ -189,7 +188,7 @@ async function deletarOrcamento(id) {
 }
 
 // ==========================================
-// FINANCEIRO & DESPESAS
+// FINANCEIRO, DESPESAS E CONTAS A PAGAR
 // ==========================================
 async function atualizarPagamentoServico(id, status_pagamento, forma_pagamento) {
     const { data, error } = await supabaseClient.from('servicos').update({ status_pagamento, forma_pagamento }).eq('id', id).select();
@@ -223,4 +222,24 @@ async function deletarDespesa(id) {
 async function registrarPagamentoFinanceiro(id, payload) {
     const { data, error } = await supabaseClient.from('servicos').update(payload).eq('id', id).select();
     if (error) throw error; return data;
+}
+
+// NOVAS FUNÇÕES: CONTAS A PAGAR
+async function getContasAPagar() {
+    const { data, error } = await supabaseClient.from('contas_a_pagar').select('*').order('data_vencimento', { ascending: true });
+    if (error) console.error('Erro ao buscar contas a pagar:', error);
+    return data || [];
+}
+async function salvarContaAPagar(conta) {
+    if (conta.id) {
+        const { data, error } = await supabaseClient.from('contas_a_pagar').update(conta).eq('id', conta.id).select();
+        if (error) throw error; return data;
+    } else {
+        delete conta.id;
+        const { data, error } = await supabaseClient.from('contas_a_pagar').insert([conta]).select();
+        if (error) throw error; return data;
+    }
+}
+async function deletarContaAPagar(id) {
+    await supabaseClient.from('contas_a_pagar').delete().eq('id', id);
 }
