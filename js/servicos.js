@@ -1,9 +1,29 @@
-let servicosFiltrados = [];
+let abaAtual = 'ativos'; // 'ativos' ou 'historico'
+let servicosGlobais = [];
 
 async function carregarServicos() {
-    const servicos = await getServicos();
-    servicosFiltrados = servicos;
-    renderizarServicos(servicos);
+    servicosGlobais = await getServicos();
+    renderizarAba();
+}
+
+function mudarAbaServicos(aba) {
+    abaAtual = aba;
+    
+    // Atualiza o visual dos botões de aba
+    document.getElementById('tab-ativos').className = aba === 'ativos' ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
+    document.getElementById('tab-historico').className = aba === 'historico' ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
+    
+    renderizarAba();
+}
+
+function renderizarAba() {
+    let filtrados = [];
+    if (abaAtual === 'ativos') {
+        filtrados = servicosGlobais.filter(s => s.status !== 'Concluído');
+    } else {
+        filtrados = servicosGlobais.filter(s => s.status === 'Concluído');
+    }
+    renderizarServicos(filtrados);
 }
 
 function renderizarServicos(servicos) {
@@ -11,7 +31,7 @@ function renderizarServicos(servicos) {
     if (!tbody) return;
     
     if (servicos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">Nenhum serviço cadastrado</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">Nenhum serviço encontrado nesta aba.</td></tr>`;
         return;
     }
     
@@ -23,6 +43,7 @@ function renderizarServicos(servicos) {
             <td><span class="status-badge ${s.status === 'Concluído' ? 'status-success' : s.status === 'Em andamento' ? 'status-warning' : 'status-info'}">${s.status}</span></td>
             <td><strong>R$ ${parseFloat(s.valor).toFixed(2)}</strong></td>
             <td class="actions">
+                ${s.status !== 'Concluído' ? `<button class="btn-icon" style="color:var(--success)" onclick="abrirModalConcluir(${s.id})" title="Concluir Serviço"><i class="fas fa-check-double"></i></button>` : ''}
                 <button class="btn-icon" onclick="editarServico(${s.id})" title="Editar"><i class="fas fa-edit"></i></button>
                 <button class="btn-icon" onclick="excluirServico(${s.id})" title="Excluir"><i class="fas fa-trash"></i></button>
                 <button class="btn-icon" onclick="verDetalhesServico(${s.id})" title="Detalhes"><i class="fas fa-info-circle"></i></button>
@@ -31,10 +52,12 @@ function renderizarServicos(servicos) {
     `).join('');
 }
 
+// ==========================================
+// CRUD BÁSICO DE SERVIÇOS
+// ==========================================
 async function abrirModalServico(servico = null) {
     const form = document.getElementById('servicoForm');
     
-    // Carrega Clientes e Colaboradores para os selects
     const clientes = await getClientes();
     document.getElementById('clienteSelect').innerHTML = '<option value="">Selecione um cliente...</option>' + 
         clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
@@ -68,8 +91,7 @@ async function abrirModalServico(servico = null) {
 function fecharModalServico() { document.getElementById('servicoModal').style.display = 'none'; }
 
 async function editarServico(id) {
-    const servicos = await getServicos();
-    const servico = servicos.find(s => s.id === id);
+    const servico = servicosGlobais.find(s => s.id === id);
     if (servico) await abrirModalServico(servico);
 }
 
@@ -80,9 +102,66 @@ async function excluirServico(id) {
     }
 }
 
+document.getElementById('servicoForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const servico = {
+        id: document.getElementById('servicoId').value || null,
+        cliente_id: parseInt(document.getElementById('clienteSelect').value),
+        tipo: document.getElementById('tipoServico').value,
+        data: document.getElementById('dataServico').value,
+        hora: document.getElementById('horaServico').value,
+        colaborador_id: parseInt(document.getElementById('colaboradorSelect').value) || null,
+        status: document.getElementById('status').value,
+        valor: parseFloat(document.getElementById('valor').value),
+        descricao: document.getElementById('descricao').value
+    };
+    
+    await salvarServico(servico);
+    fecharModalServico();
+    carregarServicos();
+});
+
+// ==========================================
+// CONCLUIR SERVIÇO (HISTÓRICO)
+// ==========================================
+function abrirModalConcluir(id) {
+    document.getElementById('concluirForm').reset();
+    document.getElementById('concluirServicoId').value = id;
+    document.getElementById('concluirModal').style.display = 'block';
+}
+
+function fecharModalConcluir() {
+    document.getElementById('concluirModal').style.display = 'none';
+}
+
+document.getElementById('concluirForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('concluirServicoId').value;
+    const formaPgto = document.getElementById('concluirFormaPgto').value;
+    
+    try {
+        await concluirServicoDB(id, formaPgto);
+        fecharModalConcluir();
+        await carregarServicos(); // Recarrega a tabela e joga pro histórico
+        
+        const msg = document.createElement('div');
+        msg.textContent = 'Serviço concluído e enviado para o Financeiro!';
+        msg.style.cssText = 'position:fixed; bottom:20px; right:20px; background:var(--success); color:white; padding:12px 24px; border-radius:8px; z-index:9999; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 4000);
+    } catch (erro) {
+        alert('Erro ao concluir o serviço.');
+        console.error(erro);
+    }
+});
+
+// ==========================================
+// DETALHES DO SERVIÇO
+// ==========================================
 async function verDetalhesServico(id) {
-    const servicos = await getServicos();
-    const servico = servicos.find(s => s.id === id);
+    const servico = servicosGlobais.find(s => s.id === id);
     const empresa = await getEmpresa();
     
     if (servico) {
@@ -112,24 +191,5 @@ async function verDetalhesServico(id) {
 
 function fecharDetalhesModal() { document.getElementById('detalhesModal').style.display = 'none'; }
 
-document.getElementById('servicoForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const servico = {
-        id: document.getElementById('servicoId').value || null,
-        cliente_id: parseInt(document.getElementById('clienteSelect').value),
-        tipo: document.getElementById('tipoServico').value,
-        data: document.getElementById('dataServico').value,
-        hora: document.getElementById('horaServico').value,
-        colaborador_id: parseInt(document.getElementById('colaboradorSelect').value) || null,
-        status: document.getElementById('status').value,
-        valor: parseFloat(document.getElementById('valor').value),
-        descricao: document.getElementById('descricao').value
-    };
-    
-    await salvarServico(servico);
-    fecharModalServico();
-    carregarServicos();
-});
-
+// Inicializa a página
 carregarServicos();

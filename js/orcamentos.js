@@ -16,6 +16,7 @@ async function carregarOrcamentos() {
             <td>${new Date(orcamento.data).toLocaleDateString('pt-BR')}</td>
             <td><strong style="color: #10b981;">R$ ${parseFloat(orcamento.valor).toFixed(2)}</strong></td>
             <td class="actions">
+                <button class="btn-icon" style="color: var(--text-main);" onclick="visualizarOrcamento(${orcamento.id})" title="Visualizar na tela"><i class="fas fa-eye"></i></button>
                 <button class="btn-icon" style="color: var(--success);" onclick="abrirModalAprovar(${orcamento.id})" title="Aprovar e Gerar Serviço"><i class="fas fa-check-circle"></i></button>
                 <button class="btn-icon" style="color: var(--primary);" onclick="gerarPDF(${orcamento.id})" title="Gerar PDF"><i class="fas fa-file-pdf"></i></button>
                 <button class="btn-icon" style="color: var(--danger);" onclick="excluirOrcamento(${orcamento.id})" title="Excluir"><i class="fas fa-trash"></i></button>
@@ -24,14 +25,14 @@ async function carregarOrcamentos() {
     `).join('');
 }
 
-// LOGICA DO ORÇAMENTO
+// LÓGICA DO ORÇAMENTO
 async function abrirModalOrcamento() {
     const clientes = await getClientes();
     catalogoGlobal = await getCatalogo();
     
     document.getElementById('clienteSelect').innerHTML = '<option value="">Selecione um cliente...</option>' + 
         clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-    
+        
     document.getElementById('orcamentoForm').reset();
     document.getElementById('orcamentoId').value = '';
     document.getElementById('dataOrcamento').value = new Date().toISOString().split('T')[0];
@@ -169,8 +170,8 @@ async function abrirModalAprovar(orcamentoId) {
     const colabs = await getColaboradores();
     document.getElementById('aprovColaborador').innerHTML = '<option value="">Selecione um técnico...</option>' + 
         colabs.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-    
-    document.getElementById('aprovForm').reset();
+        
+    document.getElementById('aprovarForm').reset();
     document.getElementById('aprovOrcamentoId').value = orcamentoId;
     document.getElementById('aprovData').value = new Date().toISOString().split('T')[0];
     
@@ -179,17 +180,15 @@ async function abrirModalAprovar(orcamentoId) {
 
 function fecharModalAprovar() { document.getElementById('aprovarModal').style.display = 'none'; }
 
-document.getElementById('aprovForm').addEventListener('submit', async function(e) {
+document.getElementById('aprovarForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const orcamentoId = parseInt(document.getElementById('aprovOrcamentoId').value);
     const orcamentos = await getOrcamentos();
     const orcamentoOriginal = orcamentos.find(o => o.id === orcamentoId);
     
     if(!orcamentoOriginal) return;
-
     let detalhesItens = orcamentoOriginal.itens.map(i => `${i.quantidade}x ${i.descricao}`).join("\n");
     let desc = `Serviço gerado a partir do Orçamento #${orcamentoOriginal.id}\nItens:\n${detalhesItens}`;
-
     const novoServico = {
         cliente_id: orcamentoOriginal.cliente_id,
         tipo: document.getElementById('aprovTipoServico').value,
@@ -201,7 +200,6 @@ document.getElementById('aprovForm').addEventListener('submit', async function(e
         descricao: desc,
         prazo: null
     };
-
     try {
         await salvarServico(novoServico);
         alert('Serviço agendado com sucesso! Verifique a aba Serviços.');
@@ -211,6 +209,68 @@ document.getElementById('aprovForm').addEventListener('submit', async function(e
         console.error(err);
     }
 });
+
+// ==========================================
+// VISUALIZAR ORÇAMENTO (SEM IMPRIMIR)
+// ==========================================
+async function visualizarOrcamento(id) {
+    const orcamentos = await getOrcamentos();
+    const orcamento = orcamentos.find(o => o.id === id);
+    
+    if (!orcamento) return;
+    
+    const itensHTML = (orcamento.itens || []).map(item => `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 12px 10px; color: var(--text-main);">${item.descricao}</td>
+            <td style="padding: 12px 10px; text-align: center; color: var(--text-main);">${item.quantidade}</td>
+            <td style="padding: 12px 10px; text-align: right; color: var(--text-main);">R$ ${item.valorUnitario.toFixed(2)}</td>
+            <td style="padding: 12px 10px; text-align: right; font-weight: bold; color: var(--primary);">R$ ${item.subtotal.toFixed(2)}</td>
+        </tr>
+    `).join('');
+
+    document.getElementById('conteudoVisualizarOrcamento').innerHTML = `
+        <div style="margin-bottom: 25px; display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 20px;">
+            <div>
+                <h3 style="margin-bottom: 8px; color: var(--text-main); font-size: 20px;">Orçamento #${orcamento.id.toString().padStart(5, '0')}</h3>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 4px;"><strong>Cliente:</strong> ${orcamento.clienteNome}</p>
+                <p style="color: var(--text-muted); font-size: 14px; margin: 0;"><strong>Data de Emissão:</strong> ${new Date(orcamento.data).toLocaleDateString('pt-BR')}</p>
+            </div>
+            <div style="text-align: right; background: var(--bg-input); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Valor Total</p>
+                <h3 style="color: var(--success); font-size: 26px; margin-bottom: 4px;">R$ ${parseFloat(orcamento.valor).toFixed(2)}</h3>
+                <p style="color: var(--text-muted); font-size: 12px; margin: 0;">Válido por ${orcamento.validade} dias</p>
+            </div>
+        </div>
+        
+        <h4 style="margin-bottom: 15px; color: var(--text-main); font-size: 16px;"><i class="fas fa-list-ul"></i> Itens do Orçamento</h4>
+        <div style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 25px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                    <tr style="background: rgba(0,0,0,0.2); text-align: left;">
+                        <th style="padding: 12px 10px; color: var(--text-muted); font-weight: 600;">Descrição do Serviço ou Peça</th>
+                        <th style="padding: 12px 10px; text-align: center; color: var(--text-muted); font-weight: 600;">Qtd</th>
+                        <th style="padding: 12px 10px; text-align: right; color: var(--text-muted); font-weight: 600;">Valor Unit.</th>
+                        <th style="padding: 12px 10px; text-align: right; color: var(--text-muted); font-weight: 600;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itensHTML}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="background: rgba(14, 165, 233, 0.05); padding: 15px; border-radius: var(--radius-md); border-left: 4px solid var(--primary);">
+            <h4 style="margin-bottom: 8px; color: var(--text-main); font-size: 14px;">Condições e Observações</h4>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0; white-space: pre-line; line-height: 1.6;">${orcamento.observacoes || 'Nenhuma observação informada.'}</p>
+        </div>
+    `;
+    
+    document.getElementById('visualizarOrcamentoModal').style.display = 'block';
+}
+
+function fecharModalVisualizarOrcamento() {
+    document.getElementById('visualizarOrcamentoModal').style.display = 'none';
+}
 
 // ==========================================
 // PDF GENERATOR
@@ -224,11 +284,10 @@ async function gerarPDF(id) {
     
     const empresaNome = empresa?.nome_empresa || 'NOME DA EMPRESA';
     const empresaCnpj = empresa?.cnpj || '00.000.000/0001-00';
-    const empresaEndereco = empresa?.endereco || 'Endereço não cadastrado';
+    const empresaEndereco = empresa?.endereco || 'Endereço cadastrado';
     const empresaTelefone = empresa?.telefone || '(00) 00000-0000';
     
     if (!orcamento || !cliente) return;
-
     const itensHTML = (orcamento.itens || []).map(item => `
         <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 13px;">${item.descricao}</td>
@@ -237,7 +296,6 @@ async function gerarPDF(id) {
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: #0f172a; font-size: 13px;">R$ ${item.subtotal.toFixed(2)}</td>
         </tr>
     `).join('');
-
     const pdfContainer = document.getElementById('pdf-container');
     pdfContainer.innerHTML = `
         <div id="documento-pdf" style="padding: 40px; background: white; color: #334155; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; position: relative; min-height: 1040px; box-sizing: border-box;">

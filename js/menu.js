@@ -33,6 +33,7 @@ function carregarMenu() {
                 </li>
                 
                 <li><a href="${basePath}pages/orcamentos.html" data-page="orcamentos"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
+                <li><a href="${basePath}pages/financeiro.html" data-page="financeiro"><i class="fas fa-hand-holding-usd"></i> Financeiro</a></li>
                 <li><a href="${basePath}pages/relatorios.html" data-page="relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
                 
                 <li class="menu-bottom"><a href="${basePath}pages/configuracoes.html" data-page="configuracoes"><i class="fas fa-cog"></i> Configurações</a></li>

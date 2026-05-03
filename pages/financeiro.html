@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro - FRIOTEX</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .select-fin { padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 13px; }
+        .select-fin:focus { outline: none; border-color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div id="menu-container"></div>
+    
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-hand-holding-usd"></i> Gestão Financeira</h1>
+                <p>Controle de recebimentos, pagamentos pendentes e fluxo de caixa</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1);">
+                    <i class="fas fa-check-double" style="color: var(--success);"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Total Recebido</h3>
+                    <p id="total-recebido" style="color: var(--success);">R$ 0,00</p>
+                    <span class="stat-trend">Pagamentos já confirmados</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1);">
+                    <i class="fas fa-hourglass-half" style="color: var(--warning);"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>A Receber</h3>
+                    <p id="total-pendente" style="color: var(--warning);">R$ 0,00</p>
+                    <span class="stat-trend">Serviços pendentes de acerto</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Faturamento Total</h3>
+                    <p id="total-geral">R$ 0,00</p>
+                    <span class="stat-trend">Soma de todos os serviços</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente / Serviço</th>
+                        <th>Valor</th>
+                        <th>Forma de Pgto</th>
+                        <th>Status do Pgto</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="financeiro-list">
+                    <tr><td colspan="5" style="text-align: center;">Carregando dados financeiros...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="../js/database.js"></script>
+    <script src="../js/menu.js"></script>
+    <script src="../js/financeiro.js"></script>
+</body>
+</html>

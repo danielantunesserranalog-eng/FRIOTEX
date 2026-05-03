@@ -1,7 +1,6 @@
 // Configuração do Supabase
 const supabaseUrl = 'https://gaflsobdfcghtvpqcrdk.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZmxzb2JkZmNnaHR2cHFjcmRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3Nzg1ODUsImV4cCI6MjA5MzM1NDU4NX0.Y64crvMlfCiAcO9Jn6lBFjYeO_LmUQ_xKEM2r0mxaTY';
-
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
@@ -12,6 +11,7 @@ async function getEmpresa() {
     if (error) console.error('Erro ao buscar empresa:', error);
     return data;
 }
+
 async function salvarEmpresa(empresa) {
     if (empresa.id) {
         const { data, error } = await supabaseClient.from('empresa').update(empresa).eq('id', empresa.id).select();
@@ -26,13 +26,14 @@ async function salvarEmpresa(empresa) {
 }
 
 // ==========================================
-// COLABORADORES CRUD (NOVO)
+// COLABORADORES CRUD
 // ==========================================
 async function getColaboradores() {
     const { data, error } = await supabaseClient.from('colaboradores').select('*').order('nome');
     if (error) console.error('Erro ao buscar colaboradores:', error);
     return data || [];
 }
+
 async function salvarColaborador(colaborador) {
     if (colaborador.id) {
         const { data, error } = await supabaseClient.from('colaboradores').update(colaborador).eq('id', colaborador.id).select();
@@ -45,6 +46,7 @@ async function salvarColaborador(colaborador) {
         return data ? data[0] : null;
     }
 }
+
 async function deletarColaborador(id) {
     const { error } = await supabaseClient.from('colaboradores').delete().eq('id', id);
     if (error) console.error('Erro ao deletar colaborador:', error);
@@ -58,6 +60,7 @@ async function getClientes() {
     if (error) console.error('Erro ao buscar clientes:', error);
     return data || [];
 }
+
 async function salvarCliente(cliente) {
     if (cliente.id) {
         const { data, error } = await supabaseClient.from('clientes').update(cliente).eq('id', cliente.id).select();
@@ -70,6 +73,7 @@ async function salvarCliente(cliente) {
         return data ? data[0] : null;
     }
 }
+
 async function deletarCliente(id) {
     const { error } = await supabaseClient.from('clientes').delete().eq('id', id);
     if (error) console.error('Erro ao deletar cliente:', error);
@@ -83,6 +87,7 @@ async function getCatalogo() {
     if (error) console.error('Erro ao buscar catálogo:', error);
     return data || [];
 }
+
 async function salvarCatalogo(item) {
     if (item.id) {
         const { data, error } = await supabaseClient.from('catalogo_servicos').update(item).eq('id', item.id).select();
@@ -95,13 +100,14 @@ async function salvarCatalogo(item) {
         return data;
     }
 }
+
 async function deletarCatalogo(id) {
     const { error } = await supabaseClient.from('catalogo_servicos').delete().eq('id', id);
     if (error) console.error('Erro ao deletar item do catálogo:', error);
 }
 
 // ==========================================
-// SERVIÇOS EXECUTADOS CRUD (ATUALIZADO)
+// SERVIÇOS EXECUTADOS CRUD
 // ==========================================
 async function getServicos() {
     const { data, error } = await supabaseClient.from('servicos').select('*, clientes(nome), colaboradores(nome)').order('data', { ascending: false });
@@ -112,6 +118,7 @@ async function getServicos() {
         colaboradorNome: s.colaboradores ? s.colaboradores.nome : 'Não Atribuído'
     }));
 }
+
 async function salvarServico(servico) {
     delete servico.clienteNome;
     delete servico.colaboradorNome;
@@ -126,36 +133,40 @@ async function salvarServico(servico) {
         return data;
     }
 }
+
 async function deletarServico(id) {
     const { error } = await supabaseClient.from('servicos').delete().eq('id', id);
     if (error) console.error('Erro ao deletar serviço:', error);
 }
 
 // ==========================================
-// ORÇAMENTOS CRUD
+// FINANCEIRO & CONCLUSÃO DE SERVIÇO
 // ==========================================
-async function getOrcamentos() {
-    const { data, error } = await supabaseClient.from('orcamentos').select('*, clientes(nome)').order('data', { ascending: false });
-    if (error) console.error('Erro ao buscar orçamentos:', error);
-    return (data || []).map(o => ({
-        ...o,
-        clienteNome: o.clientes ? o.clientes.nome : 'Desconhecido'
-    }));
+async function atualizarPagamentoServico(id, status_pagamento, forma_pagamento) {
+    const { data, error } = await supabaseClient
+        .from('servicos')
+        .update({ 
+            status_pagamento: status_pagamento, 
+            forma_pagamento: forma_pagamento 
+        })
+        .eq('id', id)
+        .select();
+        
+    if (error) console.error('Erro ao atualizar pagamento:', error);
+    return data;
 }
-async function salvarOrcamento(orcamento) {
-    delete orcamento.clienteNome;
-    if (orcamento.id) {
-        const { data, error } = await supabaseClient.from('orcamentos').update(orcamento).eq('id', orcamento.id).select();
-        if (error) console.error('Erro ao atualizar orçamento:', error);
-        return data;
-    } else {
-        delete orcamento.id;
-        const { data, error } = await supabaseClient.from('orcamentos').insert([orcamento]).select();
-        if (error) console.error('Erro ao inserir orçamento:', error);
-        return data;
-    }
-}
-async function deletarOrcamento(id) {
-    const { error } = await supabaseClient.from('orcamentos').delete().eq('id', id);
-    if (error) console.error('Erro ao deletar orçamento:', error);
+
+async function concluirServicoDB(id, forma_pagamento) {
+    const { data, error } = await supabaseClient
+        .from('servicos')
+        .update({ 
+            status: 'Concluído',
+            status_pagamento: 'Pago', 
+            forma_pagamento: forma_pagamento 
+        })
+        .eq('id', id)
+        .select();
+        
+    if (error) console.error('Erro ao concluir serviço:', error);
+    return data;
 }

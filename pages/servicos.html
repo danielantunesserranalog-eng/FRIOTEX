@@ -9,6 +9,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .tabs-container { margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .tab-btn { padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .tab-active { background: var(--primary); color: white; }
+        .tab-inactive { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
+        .tab-inactive:hover { background: var(--bg-surface); color: var(--text-main); }
+    </style>
 </head>
 <body>
     <div id="menu-container"></div>
@@ -16,10 +23,20 @@
         <div class="page-header">
             <div class="header-title">
                 <h1><i class="fas fa-tools"></i> Gerenciar Serviços</h1>
-                <p>Controle todos os serviços e agendamentos</p>
+                <p>Controle todos os serviços, agendamentos e histórico</p>
             </div>
             <button class="btn-primary" onclick="abrirModalServico()">
                 <i class="fas fa-plus"></i> Novo Serviço
+            </button>
+        </div>
+
+        <!-- Abas (Tabs) -->
+        <div class="tabs-container">
+            <button class="tab-btn tab-active" id="tab-ativos" onclick="mudarAbaServicos('ativos')">
+                <i class="fas fa-clock"></i> Em Andamento
+            </button>
+            <button class="tab-btn tab-inactive" id="tab-historico" onclick="mudarAbaServicos('historico')">
+                <i class="fas fa-check-double"></i> Histórico (Concluídos)
             </button>
         </div>
         
@@ -104,6 +121,37 @@
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" onclick="fecharModalServico()">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Serviço</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Conclusão de Serviço -->
+    <div id="concluirModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-check-double" style="color: var(--success);"></i> Concluir Serviço</h2>
+                <span class="close" onclick="fecharModalConcluir()">&times;</span>
+            </div>
+            <form id="concluirForm">
+                <input type="hidden" id="concluirServicoId">
+                <div style="padding: 24px;">
+                    <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Para mover este serviço para o Histórico, informe como o pagamento foi ou será realizado:</p>
+                    <div class="form-group" style="padding: 0;">
+                        <label>Forma de Pagamento *</label>
+                        <select id="concluirFormaPgto" required>
+                            <option value="">Selecione...</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Débito">Cartão de Débito</option>
+                            <option value="Crédito">Cartão de Crédito</option>
+                            <option value="Nota">Faturado (Nota)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="fecharModalConcluir()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="background: var(--success); border-color: var(--success);">Confirmar e Concluir</button>
                 </div>
             </form>
         </div>
