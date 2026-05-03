@@ -80,52 +80,47 @@
                 if (userRequiresChange) {
                     if (!newPassInput || newPassInput.length < 4) {
                         msgDiv.innerText = 'A nova senha deve ter no mínimo 4 caracteres.';
-                        btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
-                        return;
+                        btn.innerHTML = 'Entrar'; return;
                     }
                     const newHash = await gerarHash(newPassInput);
-                    // Atualiza usando os nomes exatos da sua imagem
-                    const { error: updateErr } = await supabaseClient.from('usuários')
-                        .update({ hash_da_senha: newHash, deve_alterar_a_senha: false })
+                    const { error: updateErr } = await supabaseClient.from('usuarios')
+                        .update({ hash_da_senha: newHash, deve_alterar_senha: false })
                         .eq('id', userRequiresChange.id);
                     
                     if(updateErr) {
-                        msgDiv.innerHTML = 'Erro: ' + updateErr.message;
+                        msgDiv.innerHTML = 'Erro ao salvar: ' + updateErr.message;
                         btn.innerHTML = 'Entrar'; return;
                     }
                     
-                    iniciarSessao(userRequiresChange.nome_de_usuário, userRequiresChange.papel);
+                    iniciarSessao(userRequiresChange.nome_de_usuario, userRequiresChange.papel);
                     return;
                 }
 
                 const passHash = await gerarHash(pass);
-                
-                // Busca na tabela com acento
-                const { data, error } = await supabaseClient.from('usuários').select('*');
+                const { data, error } = await supabaseClient.from('usuarios').select('*');
 
                 if (error) {
-                    msgDiv.innerHTML = 'Erro no Banco: ' + error.message;
+                    msgDiv.innerHTML = 'Erro de banco: ' + error.message;
                     btn.innerHTML = 'Entrar'; return;
                 }
 
-                // Procura usando os nomes das colunas da sua imagem
-                const userFound = data.find(u => u.nome_de_usuário === user && u.hash_da_senha === passHash);
+                const userFound = data.find(u => u.nome_de_usuario === user && u.hash_da_senha === passHash);
 
                 if (!userFound) {
                     msgDiv.innerText = 'Usuário ou senha incorretos.';
                     btn.innerHTML = 'Entrar'; return;
                 }
 
-                if (userFound.deve_alterar_a_senha) {
+                if (userFound.deve_alterar_senha) {
                     userRequiresChange = userFound;
                     document.getElementById('newPasswordBlock').style.display = 'block';
                     document.getElementById('username').readOnly = true;
                     document.getElementById('password').readOnly = true;
                     document.getElementById('newPassword').required = true;
-                    msgDiv.innerText = 'Defina uma nova senha.';
+                    msgDiv.innerText = 'Primeiro acesso: defina sua nova senha.';
                     btn.innerHTML = 'Salvar e Entrar';
                 } else {
-                    iniciarSessao(userFound.nome_de_usuário, userFound.papel);
+                    iniciarSessao(userFound.nome_de_usuario, userFound.papel);
                 }
             } catch (err) {
                 msgDiv.innerText = 'Erro crítico.';
