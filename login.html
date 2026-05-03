@@ -28,7 +28,7 @@
         <form id="loginForm">
             <div class="form-group" style="padding: 0;">
                 <label>Usuário</label>
-                <input type="text" id="username" placeholder="Ex: DANIEL.RIBEIRO" style="text-transform: uppercase;" required>
+                <input type="text" id="username" placeholder="Ex: ADMIN" style="text-transform: uppercase;" required>
             </div>
             
             <div class="form-group" style="padding: 0;">
@@ -36,7 +36,6 @@
                 <input type="password" id="password" placeholder="••••••••" required>
             </div>
 
-            <!-- Este bloco só aparece se o usuário precisar trocar a senha (primeiro acesso) -->
             <div id="newPasswordBlock" style="display: none;">
                 <div class="form-group" style="padding: 0; margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
                     <label style="color: var(--warning);"><i class="fas fa-exclamation-triangle"></i> Troca de Senha Obrigatória</label>
@@ -52,7 +51,6 @@
         </form>
     </div>
 
-    <!-- Script de Autenticação isolado para o Login -->
     <script>
         const supabaseUrl = 'https://gaflsobdfcghtvpqcrdk.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZmxzb2JkZmNnaHR2cHFjcmRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3Nzg1ODUsImV4cCI6MjA5MzM1NDU4NX0.Y64crvMlfCiAcO9Jn6lBFjYeO_LmUQ_xKEM2r0mxaTY';
@@ -72,14 +70,14 @@
             const btn = e.target.querySelector('button');
             const msgDiv = document.getElementById('loginMsg');
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Autenticando...';
-            msgDiv.innerText = '';
+            msgDiv.innerHTML = '';
 
             const user = document.getElementById('username').value.trim().toUpperCase();
             const pass = document.getElementById('password').value;
             const newPassInput = document.getElementById('newPassword').value;
 
             try {
-                // Se já pediu a nova senha
+                // SE O USUÁRIO ESTIVER TROCANDO A SENHA
                 if (userRequiresChange) {
                     if (!newPassInput || newPassInput.length < 4) {
                         msgDiv.innerText = 'A nova senha deve ter no mínimo 4 caracteres.';
@@ -87,29 +85,49 @@
                         return;
                     }
                     const newHash = await gerarHash(newPassInput);
-                    await supabaseClient.from('usuarios').update({ 
-                        password_hash: newHash, 
-                        must_change_password: false 
-                    }).eq('id', userRequiresChange.id);
+                    const { error: updateErr } = await supabaseClient.from('usuarios')
+                        .update({ password_hash: newHash, must_change_password: false })
+                        .eq('id', userRequiresChange.id);
+                    
+                    if(updateErr) {
+                        msgDiv.innerHTML = 'Erro ao salvar senha: ' + updateErr.message;
+                        btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
+                        return;
+                    }
                     
                     iniciarSessao(userRequiresChange.username, userRequiresChange.role);
                     return;
                 }
 
-                // Busca o usuário e verifica a senha
                 const passHash = await gerarHash(pass);
-                const { data, error } = await supabaseClient.from('usuarios')
-                    .select('*').eq('username', user).eq('password_hash', passHash).single();
+                
+                // BUSCA À PROVA DE FALHAS: Puxa todo mundo para o Javascript verificar
+                const { data, error } = await supabaseClient.from('usuarios').select('*');
 
-                if (error || !data) {
+                if (error) {
+                    msgDiv.innerHTML = 'Erro no Supabase: ' + error.message;
+                    btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    msgDiv.innerHTML = 'O banco conectou, mas a tabela está VAZIA. O usuário ADMIN não existe.';
+                    btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
+                    return;
+                }
+
+                // Procura o usuário na lista que voltou do banco
+                const userFound = data.find(u => u.username === user && u.password_hash === passHash);
+
+                if (!userFound) {
                     msgDiv.innerText = 'Usuário ou senha incorretos.';
                     btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
                     return;
                 }
 
                 // Verifica se é o primeiro acesso
-                if (data.must_change_password) {
-                    userRequiresChange = data;
+                if (userFound.must_change_password) {
+                    userRequiresChange = userFound;
                     document.getElementById('newPasswordBlock').style.display = 'block';
                     document.getElementById('username').readOnly = true;
                     document.getElementById('password').readOnly = true;
@@ -118,10 +136,10 @@
                     msgDiv.style.color = 'var(--warning)';
                     btn.innerHTML = 'Salvar e Entrar <i class="fas fa-save"></i>';
                 } else {
-                    iniciarSessao(data.username, data.role);
+                    iniciarSessao(userFound.username, userFound.role);
                 }
             } catch (err) {
-                msgDiv.innerText = 'Erro no servidor de autenticação.';
+                msgDiv.innerText = 'Erro crítico de conexão.';
                 btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
             }
         });
