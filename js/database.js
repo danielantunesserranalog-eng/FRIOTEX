@@ -140,7 +140,7 @@ async function deletarServico(id) {
 }
 
 // ==========================================
-// ORÇAMENTOS CRUD (RESTAURADO)
+// ORÇAMENTOS CRUD
 // ==========================================
 async function getOrcamentos() {
     const { data, error } = await supabaseClient.from('orcamentos').select('*, clientes(nome)').order('data', { ascending: false });
@@ -171,7 +171,7 @@ async function deletarOrcamento(id) {
 }
 
 // ==========================================
-// FINANCEIRO & CONCLUSÃO DE SERVIÇO
+// FINANCEIRO & CONCLUSÃO MULTI-PAGAMENTO
 // ==========================================
 async function atualizarPagamentoServico(id, status_pagamento, forma_pagamento) {
     const { data, error } = await supabaseClient
@@ -187,14 +187,24 @@ async function atualizarPagamentoServico(id, status_pagamento, forma_pagamento) 
     return data;
 }
 
-async function concluirServicoDB(id, forma_pagamento) {
+async function concluirServicoDB(id, forma_pagamento, valor_pago, data_vencimento, status_pagamento) {
+    const payload = { 
+        status: 'Concluído',
+        status_pagamento: status_pagamento, 
+        forma_pagamento: forma_pagamento,
+        valor_pago: valor_pago
+    };
+    
+    // Se existir uma data de vencimento (quando fica faltando valor), adiciona ao payload
+    if (data_vencimento) {
+        payload.data_vencimento = data_vencimento;
+    } else {
+        payload.data_vencimento = null; // Limpa caso o cara pague o resto depois
+    }
+
     const { data, error } = await supabaseClient
         .from('servicos')
-        .update({ 
-            status: 'Concluído',
-            status_pagamento: 'Pago', 
-            forma_pagamento: forma_pagamento 
-        })
+        .update(payload)
         .eq('id', id)
         .select();
         

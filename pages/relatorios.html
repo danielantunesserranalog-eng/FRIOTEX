@@ -136,9 +136,15 @@
             let pendente = 0;
 
             filtrados.forEach(s => {
-                const val = parseFloat(s.valor || 0);
-                if(s.status_pagamento === 'Pago') recebido += val;
-                else pendente += val;
+                const valTotal = parseFloat(s.valor || 0);
+                let valPago = s.valor_pago !== null && s.valor_pago !== undefined ? parseFloat(s.valor_pago) : (s.status_pagamento === 'Pago' ? valTotal : 0);
+                if(valPago > valTotal) valPago = valTotal;
+                
+                let valPendente = valTotal - valPago;
+                if(valPendente < 0) valPendente = 0;
+
+                recebido += valPago;
+                pendente += valPendente;
             });
 
             const faturamento = recebido + pendente;
@@ -170,7 +176,7 @@
                     <div class="result-card">
                         <i class="fas fa-clock" style="color: var(--warning);"></i>
                         <div class="result-info">
-                            <span style="color: var(--warning);">A Receber</span>
+                            <span style="color: var(--warning);">A Receber (Restante)</span>
                             <strong style="color: var(--warning);">R$ ${pendente.toFixed(2)}</strong>
                         </div>
                     </div>
@@ -185,8 +191,15 @@
             let pendente = 0;
 
             servicos.forEach(s => {
-                if(s.status_pagamento === 'Pago') recebido += parseFloat(s.valor || 0);
-                else pendente += parseFloat(s.valor || 0);
+                const valTotal = parseFloat(s.valor || 0);
+                let valPago = s.valor_pago !== null && s.valor_pago !== undefined ? parseFloat(s.valor_pago) : (s.status_pagamento === 'Pago' ? valTotal : 0);
+                if(valPago > valTotal) valPago = valTotal;
+                
+                let valPendente = valTotal - valPago;
+                if(valPendente < 0) valPendente = 0;
+
+                recebido += valPago;
+                pendente += valPendente;
             });
 
             document.getElementById('financeiroLegenda').innerHTML = `
@@ -215,8 +228,14 @@
         async function gerarRelatorioFormasPgto(servicos) {
             const formas = {};
             servicos.forEach(s => {
-                if(s.status_pagamento === 'Pago' && s.forma_pagamento) {
-                    formas[s.forma_pagamento] = (formas[s.forma_pagamento] || 0) + parseFloat(s.valor || 0);
+                // Como agora forma_pagamento salva ex: "PIX (R$ 100) + Dinheiro (R$ 50)",
+                // pegamos o valor total pago para ilustrar no grafico de forma generalizada
+                let formaPrincipal = s.forma_pagamento ? s.forma_pagamento.split(' ')[0] : 'Indefinido';
+                
+                let valPago = s.valor_pago !== null && s.valor_pago !== undefined ? parseFloat(s.valor_pago) : (s.status_pagamento === 'Pago' ? parseFloat(s.valor||0) : 0);
+
+                if(valPago > 0) {
+                    formas[formaPrincipal] = (formas[formaPrincipal] || 0) + valPago;
                 }
             });
 
@@ -257,7 +276,7 @@
                             <span class="badge">${dados.count} serviços</span>
                         </div>
                         <div class="result-item-details">
-                            <span>  Total: R$ ${dados.total.toFixed(2)}</span>
+                            <span>  Total Gerado: R$ ${dados.total.toFixed(2)}</span>
                         </div>
                     </div>
                 `;

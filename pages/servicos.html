@@ -30,7 +30,6 @@
             </button>
         </div>
 
-        <!-- Abas (Tabs) -->
         <div class="tabs-container">
             <button class="tab-btn tab-active" id="tab-ativos" onclick="mudarAbaServicos('ativos')">
                 <i class="fas fa-clock"></i> Em Andamento
@@ -48,7 +47,7 @@
                         <th>Data e Hora</th>
                         <th>Técnico</th>
                         <th>Status</th>
-                        <th>Valor</th>
+                        <th>Valor Total</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -110,7 +109,7 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Valor (R$) *</label>
+                        <label>Valor Total do Serviço (R$) *</label>
                         <input type="number" id="valor" step="0.01" placeholder="0,00" required>
                     </div>
                 </div>
@@ -126,32 +125,52 @@
         </div>
     </div>
 
-    <!-- Modal de Conclusão de Serviço -->
+    <!-- Modal de Conclusão de Serviço Multi-Pagamentos -->
     <div id="concluirModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content modal-large">
             <div class="modal-header">
-                <h2><i class="fas fa-check-double" style="color: var(--success);"></i> Concluir Serviço</h2>
+                <h2><i class="fas fa-check-double" style="color: var(--success);"></i> Fechamento & Pagamento</h2>
                 <span class="close" onclick="fecharModalConcluir()">&times;</span>
             </div>
             <form id="concluirForm">
                 <input type="hidden" id="concluirServicoId">
                 <div style="padding: 24px;">
-                    <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Para mover este serviço para o Histórico, informe como o pagamento foi ou será realizado:</p>
-                    <div class="form-group" style="padding: 0;">
-                        <label>Forma de Pagamento *</label>
-                        <select id="concluirFormaPgto" required>
-                            <option value="">Selecione...</option>
-                            <option value="PIX">PIX</option>
-                            <option value="Dinheiro">Dinheiro</option>
-                            <option value="Débito">Cartão de Débito</option>
-                            <option value="Crédito">Cartão de Crédito</option>
-                            <option value="Nota">Faturado (Nota)</option>
-                        </select>
+                    
+                    <div style="background: var(--bg-surface); padding: 15px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color);">
+                        <span style="color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase;">Valor Total do Serviço:</span>
+                        <strong style="font-size: 24px; color: var(--text-main);" id="concluirValorTotalDisplay">R$ 0.00</strong>
                     </div>
+
+                    <h4 style="margin-bottom: 15px; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Pagamentos Recebidos Agora</h4>
+                    
+                    <div id="container-pgtos" style="margin-bottom: 10px;">
+                        <!-- JavaScript injeta as linhas de pagamento aqui -->
+                    </div>
+                    
+                    <button type="button" class="btn-secondary" style="width: 100%; justify-content: center; margin-bottom: 20px; border: 1px dashed var(--border-color);" onclick="adicionarLinhaPgto(0)">
+                        <i class="fas fa-plus"></i> Adicionar Outra Forma de Pagamento
+                    </button>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                        <span style="color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase;">Total Sendo Pago:</span>
+                        <strong style="font-size: 20px; color: var(--success);" id="concluirTotalPagoDisplay">R$ 0.00</strong>
+                    </div>
+
+                    <div id="blocoRestante" style="display: none; background: rgba(245, 158, 11, 0.05); padding: 20px; border-radius: var(--radius-md); border: 1px solid rgba(245, 158, 11, 0.2);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="color: var(--warning); font-size: 13px; font-weight: 600; text-transform: uppercase;">Falta Receber (Pendente):</span>
+                            <strong style="font-size: 20px; color: var(--warning);" id="concluirRestanteDisplay">R$ 0.00</strong>
+                        </div>
+                        <div class="form-group" style="padding: 0; margin: 0;">
+                            <label style="color: var(--warning);">Data de Previsão para Receber o Restante *</label>
+                            <input type="date" id="concluirDataPrevisao" style="border-color: rgba(245, 158, 11, 0.3); background: var(--bg-main);">
+                        </div>
+                    </div>
+
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" onclick="fecharModalConcluir()">Cancelar</button>
-                    <button type="submit" class="btn-primary" style="background: var(--success); border-color: var(--success);">Confirmar e Concluir</button>
+                    <button type="submit" class="btn-primary" style="background: var(--success); border-color: var(--success);"><i class="fas fa-check"></i> Finalizar e Salvar</button>
                 </div>
             </form>
         </div>
