@@ -5,24 +5,32 @@ async function carregarOrcamentos() {
     const tbody = document.getElementById('orcamentos-list');
     
     if (orcamentos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5">Nenhum orçamento gerado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6">Nenhum orçamento gerado</td></tr>';
         return;
     }
     
-    tbody.innerHTML = orcamentos.map(orcamento => `
-        <tr>
-            <td><strong>#${orcamento.id.toString().padStart(5, '0')}</strong></td>
-            <td>${orcamento.clienteNome}</td>
-            <td>${new Date(orcamento.data).toLocaleDateString('pt-BR')}</td>
-            <td><strong style="color: #10b981;">R$ ${parseFloat(orcamento.valor).toFixed(2)}</strong></td>
-            <td class="actions">
-                <button class="btn-icon" style="color: var(--text-main);" onclick="visualizarOrcamento(${orcamento.id})" title="Visualizar na tela"><i class="fas fa-eye"></i></button>
-                <button class="btn-icon" style="color: var(--success);" onclick="abrirModalAprovar(${orcamento.id})" title="Aprovar e Gerar Serviço"><i class="fas fa-check-circle"></i></button>
-                <button class="btn-icon" style="color: var(--primary);" onclick="gerarPDF(${orcamento.id})" title="Gerar PDF"><i class="fas fa-file-pdf"></i></button>
-                <button class="btn-icon" style="color: var(--danger);" onclick="excluirOrcamento(${orcamento.id})" title="Excluir"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = orcamentos.map(orcamento => {
+        // Pega as descrições de todos os itens e junta com vírgula
+        const itensDescricao = (orcamento.itens || []).map(i => i.descricao).join(', ');
+        // Se a lista de itens for muito grande, corta e coloca "..."
+        const descResumida = itensDescricao.length > 50 ? itensDescricao.substring(0, 50) + '...' : (itensDescricao || 'Sem itens');
+
+        return `
+            <tr>
+                <td><strong>#${orcamento.id.toString().padStart(5, '0')}</strong></td>
+                <td>${orcamento.clienteNome}</td>
+                <td><span style="color: var(--primary); font-weight: 500;" title="${itensDescricao}">${descResumida}</span></td>
+                <td>${new Date(orcamento.data).toLocaleDateString('pt-BR')}</td>
+                <td><strong style="color: #10b981;">R$ ${parseFloat(orcamento.valor).toFixed(2)}</strong></td>
+                <td class="actions">
+                    <button class="btn-icon" style="color: var(--text-main);" onclick="visualizarOrcamento(${orcamento.id})" title="Visualizar na tela"><i class="fas fa-eye"></i></button>
+                    <button class="btn-icon" style="color: var(--success);" onclick="abrirModalAprovar(${orcamento.id})" title="Aprovar e Gerar Serviço"><i class="fas fa-check-circle"></i></button>
+                    <button class="btn-icon" style="color: var(--primary);" onclick="gerarPDF(${orcamento.id})" title="Gerar PDF"><i class="fas fa-file-pdf"></i></button>
+                    <button class="btn-icon" style="color: var(--danger);" onclick="excluirOrcamento(${orcamento.id})" title="Excluir"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // LÓGICA DO ORÇAMENTO
@@ -143,6 +151,7 @@ document.getElementById('orcamentoForm').addEventListener('submit', async functi
     
     const orcamento = {
         cliente_id: parseInt(document.getElementById('clienteSelect').value),
+        tipo: 'Projeto / Geral', // Removido do HTML, deixamos um padrão no banco
         data: document.getElementById('dataOrcamento').value,
         validade: parseInt(document.getElementById('validade').value),
         valor: parseFloat(document.getElementById('valorTotal').value),
@@ -319,14 +328,13 @@ async function gerarPDF(id) {
                 </div>
             </div>
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0ea5e9; border-radius: 6px; padding: 20px; margin-bottom: 35px;">
-                <h3 style="margin: 0 0 15px 0; color: #0f172a; font-size: 14px; text-transform: uppercase;">Dados do Cliente</h3>
+                <h3 style="margin: 0 0 15px 0; color: #0f172a; font-size: 14px; text-transform: uppercase;">Dados do Orçamento</h3>
                 <div style="display: flex; justify-content: space-between; font-size: 13px;">
                     <div style="flex: 1;">
-                        <p style="margin: 0 0 8px 0;"><strong style="color: #475569;">Nome:</strong> <span style="color: #0f172a; font-weight: 500;">${cliente.nome}</span></p>
+                        <p style="margin: 0 0 8px 0;"><strong style="color: #475569;">Cliente:</strong> <span style="color: #0f172a; font-weight: 500;">${cliente.nome}</span></p>
                         <p style="margin: 0;"><strong style="color: #475569;">Contato:</strong> <span style="color: #0f172a;">${cliente.telefone}</span></p>
                     </div>
                     <div style="flex: 1;">
-                        <p style="margin: 0 0 8px 0;"><strong style="color: #475569;">E-mail:</strong> <span style="color: #0f172a;">${cliente.email || '-'}</span></p>
                         <p style="margin: 0;"><strong style="color: #475569;">Endereço:</strong> <span style="color: #0f172a;">${cliente.rua || ''} ${cliente.numero || ''}</span></p>
                     </div>
                 </div>

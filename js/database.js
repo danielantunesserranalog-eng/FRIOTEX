@@ -140,6 +140,37 @@ async function deletarServico(id) {
 }
 
 // ==========================================
+// ORÇAMENTOS CRUD (RESTAURADO)
+// ==========================================
+async function getOrcamentos() {
+    const { data, error } = await supabaseClient.from('orcamentos').select('*, clientes(nome)').order('data', { ascending: false });
+    if (error) console.error('Erro ao buscar orçamentos:', error);
+    return (data || []).map(o => ({
+        ...o,
+        clienteNome: o.clientes ? o.clientes.nome : 'Desconhecido'
+    }));
+}
+
+async function salvarOrcamento(orcamento) {
+    delete orcamento.clienteNome;
+    if (orcamento.id) {
+        const { data, error } = await supabaseClient.from('orcamentos').update(orcamento).eq('id', orcamento.id).select();
+        if (error) console.error('Erro ao atualizar orçamento:', error);
+        return data;
+    } else {
+        delete orcamento.id;
+        const { data, error } = await supabaseClient.from('orcamentos').insert([orcamento]).select();
+        if (error) console.error('Erro ao inserir orçamento:', error);
+        return data;
+    }
+}
+
+async function deletarOrcamento(id) {
+    const { error } = await supabaseClient.from('orcamentos').delete().eq('id', id);
+    if (error) console.error('Erro ao deletar orçamento:', error);
+}
+
+// ==========================================
 // FINANCEIRO & CONCLUSÃO DE SERVIÇO
 // ==========================================
 async function atualizarPagamentoServico(id, status_pagamento, forma_pagamento) {

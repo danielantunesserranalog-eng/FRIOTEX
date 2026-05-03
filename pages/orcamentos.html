@@ -43,6 +43,7 @@
                     <tr>
                         <th>Nº</th>
                         <th>Cliente</th>
+                        <th>Itens do Orçamento</th>
                         <th>Data</th>
                         <th>Valor Total</th>
                         <th>Ações</th>
@@ -72,6 +73,7 @@
                         <input type="date" id="dataOrcamento" required>
                     </div>
                 </div>
+                
                 <div class="items-section">
                     <div class="items-header-row">
                         <div>Descrição do Serviço ou Peça</div>
@@ -90,6 +92,7 @@
                         <input type="hidden" id="valorTotal" value="0">
                     </div>
                 </div>
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label>Validade da Proposta (Dias) *</label>
@@ -100,6 +103,7 @@
                         <input type="text" id="observacoesOrcamento" placeholder="Ex: 50% na aprovação, 50% na entrega">
                     </div>
                 </div>
+                
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" onclick="fecharModalOrcamento()">Cancelar</button>
                     <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar Orçamento</button>
@@ -122,13 +126,14 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Tipo de Serviço Principal *</label>
+                        <label>Tipo de Serviço (Para os Gráficos) *</label>
                         <select id="aprovTipoServico" required>
                             <option value="Manutenção Preventiva">Manutenção Preventiva</option>
                             <option value="Manutenção Corretiva">Manutenção Corretiva</option>
                             <option value="Instalação" selected>Instalação</option>
                             <option value="Limpeza">Limpeza</option>
                             <option value="Recarga de Gás">Recarga de Gás</option>
+                            <option value="Projeto / Geral">Projeto / Geral</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -154,7 +159,7 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal para Visualizar Orçamento Sem Imprimir -->
+    <!-- Modal para Visualizar Orçamento Sem Imprimir -->
     <div id="visualizarOrcamentoModal" class="modal">
         <div class="modal-content modal-large">
             <div class="modal-header">
