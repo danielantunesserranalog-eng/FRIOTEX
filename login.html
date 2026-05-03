@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - FRIOTEX</title>
+    <!-- Resolve o erro do favicon.ico -->
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,29 +24,28 @@
         <div class="login-header">
             <i class="fas fa-snowflake"></i>
             <h1>Acesso Restrito</h1>
-            <p>Sistemas de Refrigeração</p>
+            <p>FRIOTEX Refrigeração</p>
         </div>
         
         <form id="loginForm">
-            <div class="form-group" style="padding: 0;">
-                <label>Usuário</label>
-                <input type="text" id="username" placeholder="Ex: ADMIN" style="text-transform: uppercase;" required>
+            <div class="form-group" style="padding: 0; margin-bottom: 20px;">
+                <label style="display: block; color: var(--text-muted); margin-bottom: 8px;">Usuário</label>
+                <input type="text" id="username" placeholder="Digite seu login" style="width: 100%; padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-main); text-transform: uppercase;" required>
             </div>
             
-            <div class="form-group" style="padding: 0;">
-                <label>Senha</label>
-                <input type="password" id="password" placeholder="••••••••" required>
+            <div class="form-group" style="padding: 0; margin-bottom: 20px;">
+                <label style="display: block; color: var(--text-muted); margin-bottom: 8px;">Senha</label>
+                <input type="password" id="password" placeholder="••••••••" style="width: 100%; padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-main);" required>
             </div>
 
             <div id="newPasswordBlock" style="display: none;">
-                <div class="form-group" style="padding: 0; margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
-                    <label style="color: var(--warning);"><i class="fas fa-exclamation-triangle"></i> Troca de Senha Obrigatória</label>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Defina uma nova senha de sua preferência.</p>
-                    <input type="password" id="newPassword" placeholder="Nova Senha Oculta">
+                <div class="form-group" style="padding: 0; margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-color); margin-bottom: 20px;">
+                    <label style="color: var(--warning); display: block; margin-bottom: 8px;"><i class="fas fa-key"></i> Definir Nova Senha</label>
+                    <input type="password" id="newPassword" placeholder="Crie sua nova senha" style="width: 100%; padding: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-main);">
                 </div>
             </div>
             
-            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; height: 45px; font-size: 16px;">
+            <button type="submit" id="btnEntrar" class="btn-primary" style="width: 100%; justify-content: center; height: 45px; font-weight: 600;">
                 Entrar <i class="fas fa-sign-in-alt"></i>
             </button>
             <div id="loginMsg" style="text-align: center; margin-top: 15px; font-size: 13px; color: var(--danger); font-weight: bold;"></div>
@@ -67,48 +68,52 @@
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('btnEntrar');
             const msgDiv = document.getElementById('loginMsg');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Autenticando...';
-            msgDiv.innerHTML = '';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Validando...';
+            msgDiv.innerText = '';
 
-            const user = document.getElementById('username').value.trim().toUpperCase();
-            const pass = document.getElementById('password').value;
-            const newPassInput = document.getElementById('newPassword').value;
+            const userIn = document.getElementById('username').value.trim().toUpperCase();
+            const passIn = document.getElementById('password').value;
+            const newPassIn = document.getElementById('newPassword').value;
 
             try {
                 if (userRequiresChange) {
-                    if (!newPassInput || newPassInput.length < 4) {
-                        msgDiv.innerText = 'A nova senha deve ter no mínimo 4 caracteres.';
-                        btn.innerHTML = 'Entrar'; return;
+                    if (!newPassIn || newPassIn.length < 4) {
+                        msgDiv.innerText = 'Mínimo 4 caracteres.';
+                        btn.innerHTML = 'Salvar e Entrar'; return;
                     }
-                    const newHash = await gerarHash(newPassInput);
-                    const { error: updateErr } = await supabaseClient.from('usuarios')
+                    const newHash = await gerarHash(newPassIn);
+                    const { error } = await supabaseClient.from('usuarios')
                         .update({ hash_da_senha: newHash, deve_alterar_senha: false })
                         .eq('id', userRequiresChange.id);
                     
-                    if(updateErr) {
-                        msgDiv.innerHTML = 'Erro ao salvar: ' + updateErr.message;
-                        btn.innerHTML = 'Entrar'; return;
-                    }
-                    
+                    if(error) throw error;
                     iniciarSessao(userRequiresChange.nome_de_usuario, userRequiresChange.papel);
                     return;
                 }
 
-                const passHash = await gerarHash(pass);
+                const hashIn = await gerarHash(passIn);
+                
+                // Puxa os dados e mostra no console para você debugar
                 const { data, error } = await supabaseClient.from('usuarios').select('*');
+                console.log("Usuários encontrados no banco:", data);
 
                 if (error) {
-                    msgDiv.innerHTML = 'Erro de banco: ' + error.message;
+                    msgDiv.innerText = 'Erro: ' + error.message;
                     btn.innerHTML = 'Entrar'; return;
                 }
 
-                const userFound = data.find(u => u.nome_de_usuario === user && u.hash_da_senha === passHash);
+                const userFound = data.find(u => 
+                    u.nome_de_usuario.trim().toUpperCase() === userIn && 
+                    u.hash_da_senha.trim() === hashIn
+                );
 
                 if (!userFound) {
                     msgDiv.innerText = 'Usuário ou senha incorretos.';
-                    btn.innerHTML = 'Entrar'; return;
+                    btn.innerHTML = 'Entrar';
+                    console.log("Falha no login. Hash gerado localmente:", hashIn);
+                    return;
                 }
 
                 if (userFound.deve_alterar_senha) {
@@ -117,13 +122,14 @@
                     document.getElementById('username').readOnly = true;
                     document.getElementById('password').readOnly = true;
                     document.getElementById('newPassword').required = true;
-                    msgDiv.innerText = 'Primeiro acesso: defina sua nova senha.';
-                    btn.innerHTML = 'Salvar e Entrar';
+                    msgDiv.innerText = 'Primeiro acesso. Defina uma nova senha.';
+                    msgDiv.style.color = 'var(--warning)';
+                    btn.innerHTML = 'Definir Senha e Entrar';
                 } else {
                     iniciarSessao(userFound.nome_de_usuario, userFound.papel);
                 }
             } catch (err) {
-                msgDiv.innerText = 'Erro crítico.';
+                msgDiv.innerText = 'Erro de conexão.';
                 btn.innerHTML = 'Entrar';
             }
         });

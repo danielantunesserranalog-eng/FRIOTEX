@@ -14,9 +14,9 @@ if (currentFileName !== 'login.html') {
     if (!usuarioLogado) {
         window.location.href = loginPath;
     } else {
-        // Bloqueia acesso a menus administrativos para quem for Técnico
+        // Bloqueia acesso administrativo para técnicos
         if (userRole === 'Técnico' && (currentFileName === 'financeiro.html' || currentFileName === 'configuracoes.html')) {
-            alert('Acesso Negado: Esta área é restrita a Administradores.');
+            alert('Acesso Negado: Área exclusiva para Administradores.');
             window.location.href = indexPath;
         }
     }
@@ -30,7 +30,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// GERENCIAMENTO DE USUÁRIOS (ADMIN)
+// GERENCIAMENTO DE USUÁRIOS
 // ==========================================
 async function getUsuarios() {
     const { data, error } = await supabaseClient.from('usuarios').select('*').order('nome_de_usuario');
@@ -40,7 +40,8 @@ async function getUsuarios() {
 
 async function salvarUsuarioDB(usuario) {
     if (!usuario.id) {
-        const hashPadrao = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5'; // 12345
+        // Hash fixo da senha 12345
+        const hashPadrao = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5';
         const { data, error } = await supabaseClient.from('usuarios').insert([{
             nome_de_usuario: usuario.username.toUpperCase(),
             papel: usuario.role,
@@ -92,7 +93,7 @@ async function salvarEmpresa(empresa) {
 }
 
 // ==========================================
-// COLABORADORES CRUD
+// CRUD COLABORADORES
 // ==========================================
 async function getColaboradores() {
     const { data, error } = await supabaseClient.from('colaboradores').select('*').order('nome');
@@ -115,7 +116,7 @@ async function deletarColaborador(id) {
 }
 
 // ==========================================
-// CLIENTES CRUD
+// CRUD CLIENTES
 // ==========================================
 async function getClientes() {
     const { data, error } = await supabaseClient.from('clientes').select('*').order('nome');
@@ -138,7 +139,7 @@ async function deletarCliente(id) {
 }
 
 // ==========================================
-// CATÁLOGO DE SERVIÇOS/PEÇAS CRUD
+// CRUD CATÁLOGO
 // ==========================================
 async function getCatalogo() {
     const { data, error } = await supabaseClient.from('catalogo_servicos').select('*').order('nome');
@@ -161,7 +162,7 @@ async function deletarCatalogo(id) {
 }
 
 // ==========================================
-// SERVIÇOS EXECUTADOS CRUD
+// CRUD SERVIÇOS
 // ==========================================
 async function getServicos() {
     const { data, error } = await supabaseClient.from('servicos').select('*, clientes(nome), colaboradores(nome)').order('data', { ascending: false });
@@ -190,7 +191,7 @@ async function deletarServico(id) {
 }
 
 // ==========================================
-// ORÇAMENTOS CRUD
+// CRUD ORÇAMENTOS
 // ==========================================
 async function getOrcamentos() {
     const { data, error } = await supabaseClient.from('orcamentos').select('*, clientes(nome)').order('data', { ascending: false });
@@ -217,7 +218,7 @@ async function deletarOrcamento(id) {
 }
 
 // ==========================================
-// FINANCEIRO & CONCLUSÃO MULTI-PAGAMENTO
+// FINANCEIRO
 // ==========================================
 async function atualizarPagamentoServico(id, status_pagamento, forma_pagamento) {
     const { data, error } = await supabaseClient.from('servicos').update({ status_pagamento, forma_pagamento }).eq('id', id).select();
