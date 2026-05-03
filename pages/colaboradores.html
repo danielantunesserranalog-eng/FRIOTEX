@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colaboradores - FRIOTEX</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="menu-container"></div>
+    
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-id-badge"></i> Colaboradores</h1>
+                <p>Gerencie sua equipe técnica</p>
+            </div>
+            <button class="btn-primary" onclick="abrirModalColab()">
+                <i class="fas fa-plus"></i> Novo Colaborador
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome do Funcionário</th>
+                        <th>Telefone</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="colaboradores-list"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="colabModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitleColab"><i class="fas fa-user-plus"></i> Novo Colaborador</h2>
+                <span class="close" onclick="fecharModalColab()">&times;</span>
+            </div>
+            <form id="colabForm">
+                <input type="hidden" id="colabId">
+                <div class="form-group">
+                    <label>Nome Completo *</label>
+                    <input type="text" id="nomeColab" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefone *</label>
+                    <input type="tel" id="telefoneColab" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="fecharModalColab()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/database.js"></script>
+    <script src="../js/menu.js"></script>
+    <script src="../js/colaboradores.js"></script>
+</body>
+</html>

@@ -1,4 +1,3 @@
-// Menu modular - carrega o menu em todas as páginas
 document.addEventListener('DOMContentLoaded', function() {
     carregarMenu();
     destacarMenuAtivo();
@@ -23,20 +22,19 @@ function carregarMenu() {
                 <li><a href="${basePath}pages/clientes.html" data-page="clientes"><i class="fas fa-users"></i> Clientes</a></li>
                 <li><a href="${basePath}pages/servicos.html" data-page="servicos"><i class="fas fa-tools"></i> Serviços</a></li>
                 
-                <!-- Menu Cadastro com Submenus -->
                 <li class="has-submenu">
                     <a href="#" onclick="toggleSubmenu(event, 'cadastro-submenu')" id="menu-cadastro">
-                        <i class="fas fa-box"></i> Cadastro <i class="fas fa-chevron-down submenu-icon"></i>
+                        <i class="fas fa-box"></i> Cadastros <i class="fas fa-chevron-down submenu-icon"></i>
                     </a>
                     <ul class="submenu" id="cadastro-submenu">
                         <li><a href="${basePath}pages/catalogo.html" data-page="catalogo"><i class="fas fa-tags"></i> Tabela de Preços</a></li>
+                        <li><a href="${basePath}pages/colaboradores.html" data-page="colaboradores"><i class="fas fa-id-badge"></i> Colaboradores</a></li>
                     </ul>
                 </li>
                 
                 <li><a href="${basePath}pages/orcamentos.html" data-page="orcamentos"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
                 <li><a href="${basePath}pages/relatorios.html" data-page="relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
                 
-                <!-- Menu fixado na parte inferior -->
                 <li class="menu-bottom"><a href="${basePath}pages/configuracoes.html" data-page="configuracoes"><i class="fas fa-cog"></i> Configurações</a></li>
             </ul>
         </div>
@@ -81,7 +79,6 @@ function destacarMenuAtivo() {
         if (linkPage === currentPage || (currentPage === '' && linkPage === 'index.html')) {
             link.classList.add('active');
             
-            // Abre o submenu pai automaticamente se estiver dentro de um
             const parentSubmenu = link.closest('.submenu');
             if (parentSubmenu) {
                 parentSubmenu.classList.add('active');
@@ -96,11 +93,9 @@ function destacarMenuAtivo() {
     });
 }
 
-// Fechar menu ao clicar em link no mobile
 document.addEventListener('click', function(e) {
     const sidebar = document.getElementById('sidebar');
     const toggle = document.querySelector('.menu-toggle');
-    
     if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
         if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
             sidebar.classList.remove('active');

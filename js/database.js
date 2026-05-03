@@ -2,29 +2,52 @@
 const supabaseUrl = 'https://gaflsobdfcghtvpqcrdk.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZmxzb2JkZmNnaHR2cHFjcmRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3Nzg1ODUsImV4cCI6MjA5MzM1NDU4NX0.Y64crvMlfCiAcO9Jn6lBFjYeO_LmUQ_xKEM2r0mxaTY';
 
-// Usamos supabaseClient para não dar conflito
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// CONFIGURAÇÕES DA EMPRESA CRUD
+// CONFIGURAÇÕES DA EMPRESA
 // ==========================================
 async function getEmpresa() {
-    const { data, error } = await supabaseClient.from('empresa').select('*').limit(1).single();
-    if (error && error.code !== 'PGRST116') console.error('Erro ao buscar empresa:', error); // Ignora erro de row não encontrada na primeira vez
-    return data || null;
+    const { data, error } = await supabaseClient.from('empresa').select('*').limit(1).maybeSingle();
+    if (error) console.error('Erro ao buscar empresa:', error);
+    return data;
 }
-
 async function salvarEmpresa(empresa) {
     if (empresa.id) {
         const { data, error } = await supabaseClient.from('empresa').update(empresa).eq('id', empresa.id).select();
-        if (error) console.error('Erro ao atualizar empresa:', error);
+        if (error) throw error;
         return data ? data[0] : null;
     } else {
-        delete empresa.id;
-        const { data, error } = await supabaseClient.from('empresa').insert([empresa]).select();
-        if (error) console.error('Erro ao inserir empresa:', error);
+        const dadosInserir = { nome_empresa: empresa.nome_empresa, cnpj: empresa.cnpj, endereco: empresa.endereco, telefone: empresa.telefone };
+        const { data, error } = await supabaseClient.from('empresa').insert([dadosInserir]).select();
+        if (error) throw error;
         return data ? data[0] : null;
     }
+}
+
+// ==========================================
+// COLABORADORES CRUD (NOVO)
+// ==========================================
+async function getColaboradores() {
+    const { data, error } = await supabaseClient.from('colaboradores').select('*').order('nome');
+    if (error) console.error('Erro ao buscar colaboradores:', error);
+    return data || [];
+}
+async function salvarColaborador(colaborador) {
+    if (colaborador.id) {
+        const { data, error } = await supabaseClient.from('colaboradores').update(colaborador).eq('id', colaborador.id).select();
+        if (error) throw error;
+        return data ? data[0] : null;
+    } else {
+        delete colaborador.id;
+        const { data, error } = await supabaseClient.from('colaboradores').insert([colaborador]).select();
+        if (error) throw error;
+        return data ? data[0] : null;
+    }
+}
+async function deletarColaborador(id) {
+    const { error } = await supabaseClient.from('colaboradores').delete().eq('id', id);
+    if (error) console.error('Erro ao deletar colaborador:', error);
 }
 
 // ==========================================
@@ -78,18 +101,20 @@ async function deletarCatalogo(id) {
 }
 
 // ==========================================
-// SERVIÇOS EXECUTADOS CRUD
+// SERVIÇOS EXECUTADOS CRUD (ATUALIZADO)
 // ==========================================
 async function getServicos() {
-    const { data, error } = await supabaseClient.from('servicos').select('*, clientes(nome)').order('data', { ascending: false });
+    const { data, error } = await supabaseClient.from('servicos').select('*, clientes(nome), colaboradores(nome)').order('data', { ascending: false });
     if (error) console.error('Erro ao buscar serviços:', error);
     return (data || []).map(s => ({
         ...s,
-        clienteNome: s.clientes ? s.clientes.nome : 'Desconhecido'
+        clienteNome: s.clientes ? s.clientes.nome : 'Desconhecido',
+        colaboradorNome: s.colaboradores ? s.colaboradores.nome : 'Não Atribuído'
     }));
 }
 async function salvarServico(servico) {
     delete servico.clienteNome;
+    delete servico.colaboradorNome;
     if (servico.id) {
         const { data, error } = await supabaseClient.from('servicos').update(servico).eq('id', servico.id).select();
         if (error) console.error('Erro ao atualizar serviço:', error);

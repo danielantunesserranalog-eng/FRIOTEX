@@ -12,46 +12,27 @@
 </head>
 <body>
     <div id="menu-container"></div>
-    
     <main class="main-content">
         <div class="page-header">
             <div class="header-title">
                 <h1><i class="fas fa-tools"></i> Gerenciar Serviços</h1>
-                <p>Controle todos os serviços de refrigeração</p>
+                <p>Controle todos os serviços e agendamentos</p>
             </div>
             <button class="btn-primary" onclick="abrirModalServico()">
                 <i class="fas fa-plus"></i> Novo Serviço
             </button>
         </div>
-
-        <div class="filters-section">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="search-servico" placeholder="Buscar serviço por cliente, tipo ou descrição..." onkeyup="filtrarServicos()">
-            </div>
-            <div class="filter-group">
-                <select id="status-filter" class="filter-select" onchange="filtrarServicos()">
-                    <option value="todos">Todos os Status</option>
-                    <option value="Pendente">📋 Pendente</option>
-                    <option value="Em andamento">⚙️ Em andamento</option>
-                    <option value="Concluído">✅ Concluído</option>
-                </select>
-                <button class="btn-secondary" onclick="limparFiltros()">
-                    <i class="fas fa-eraser"></i> Limpar
-                </button>
-            </div>
-        </div>
-
+        
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th><i class="fas fa-user"></i> Cliente</th>
-                        <th><i class="fas fa-wrench"></i> Tipo de Serviço</th>
-                        <th><i class="fas fa-calendar"></i> Data</th>
-                        <th><i class="fas fa-chart-line"></i> Status</th>
-                        <th><i class="fas fa-dollar-sign"></i> Valor</th>
-                        <th><i class="fas fa-cogs"></i> Ações</th>
+                        <th>Cliente</th>
+                        <th>Data e Hora</th>
+                        <th>Técnico</th>
+                        <th>Status</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="servicos-list"></tbody>
@@ -59,12 +40,12 @@
         </div>
     </main>
 
+    <!-- Modal Novo/Editar Serviço -->
     <div id="servicoModal" class="modal">
         <div class="modal-content modal-large">
             <div class="modal-header">
                 <div>
                     <h2 id="modalTitleServico"><i class="fas fa-plus-circle"></i> Novo Serviço</h2>
-                    <p>Registre um novo serviço de refrigeração</p>
                 </div>
                 <span class="close" onclick="fecharModalServico()">&times;</span>
             </div>
@@ -72,50 +53,53 @@
                 <input type="hidden" id="servicoId">
                 <div class="form-row">
                     <div class="form-group">
-                        <label><i class="fas fa-user"></i> Cliente *</label>
-                        <select id="clienteSelect" required>
-                            <option value="">Selecione um cliente</option>
-                        </select>
+                        <label>Cliente *</label>
+                        <select id="clienteSelect" required></select>
                     </div>
                     <div class="form-group">
-                        <label><i class="fas fa-wrench"></i> Tipo de Serviço *</label>
+                        <label>Tipo de Serviço *</label>
                         <select id="tipoServico" required>
-                            <option value="Manutenção Preventiva">🔧 Manutenção Preventiva</option>
-                            <option value="Manutenção Corretiva">⚡ Manutenção Corretiva</option>
-                            <option value="Instalação">🏗️ Instalação</option>
-                            <option value="Limpeza">🧹 Limpeza</option>
-                            <option value="Recarga de Gás">💨 Recarga de Gás</option>
-                            <option value="Substituição de Peças">🔄 Substituição de Peças</option>
+                            <option value="Manutenção Preventiva">Manutenção Preventiva</option>
+                            <option value="Manutenção Corretiva">Manutenção Corretiva</option>
+                            <option value="Instalação">Instalação</option>
+                            <option value="Limpeza">Limpeza</option>
+                            <option value="Recarga de Gás">Recarga de Gás</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label><i class="fas fa-calendar"></i> Data do Serviço *</label>
+                        <label>Data Agendada *</label>
                         <input type="date" id="dataServico" required>
                     </div>
                     <div class="form-group">
-                        <label><i class="fas fa-tag"></i> Status *</label>
+                        <label>Hora Agendada *</label>
+                        <input type="time" id="horaServico" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Técnico Responsável *</label>
+                        <select id="colaboradorSelect" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status *</label>
                         <select id="status" required>
-                            <option value="Pendente">📋 Pendente</option>
-                            <option value="Em andamento">⚙️ Em andamento</option>
-                            <option value="Concluído">✅ Concluído</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Concluído">Concluído</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label><i class="fas fa-dollar-sign"></i> Valor (R$) *</label>
+                        <label>Valor (R$) *</label>
                         <input type="number" id="valor" step="0.01" placeholder="0,00" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-clock"></i> Prazo (dias)</label>
-                        <input type="number" id="prazo" placeholder="Dias para conclusão">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label><i class="fas fa-align-left"></i> Descrição do Serviço</label>
-                    <textarea id="descricao" rows="3" placeholder="Descreva os detalhes do serviço, equipamentos, observações técnicas..."></textarea>
+                    <label>Descrição e Observações</label>
+                    <textarea id="descricao" rows="3"></textarea>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" onclick="fecharModalServico()">Cancelar</button>
@@ -125,10 +109,11 @@
         </div>
     </div>
 
+    <!-- Modal de Detalhes -->
     <div id="detalhesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-info-circle"></i> Detalhes do Serviço</h2>
+                <h2><i class="fas fa-info-circle"></i> Ordem de Serviço</h2>
                 <span class="close" onclick="fecharDetalhesModal()">&times;</span>
             </div>
             <div id="detalhesContent"></div>
@@ -137,7 +122,6 @@
 
     <script src="../js/database.js"></script>
     <script src="../js/menu.js"></script>
-    <script src="../js/clientes.js"></script>
     <script src="../js/servicos.js"></script>
 </body>
 </html>

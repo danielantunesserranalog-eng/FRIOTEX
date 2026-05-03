@@ -11,9 +11,91 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #3d3d4d; }
-        .item-row select, .item-row input { width: 100%; padding: 10px; background: var(--darker); border: 1px solid var(--gray-light); border-radius: 8px; color: var(--text); }
-        .items-section { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        /* Novo Design do Bloco de Itens do Orçamento */
+        .items-section {
+            background: var(--bg-main); 
+            padding: 24px; 
+            border-radius: var(--radius-lg); 
+            margin-bottom: 20px; 
+            border: 1px solid var(--border-color);
+        }
+        .items-header-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1.5fr 1.5fr 40px;
+            gap: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .item-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1.5fr 1.5fr 40px;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .item-row input, .item-row select {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .item-row input:focus, .item-row select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+        }
+        .item-subtotal-box {
+            background: rgba(14, 165, 233, 0.05) !important;
+            color: var(--primary) !important;
+            font-weight: 600;
+            border-color: rgba(14, 165, 233, 0.2) !important;
+        }
+        .add-item-btn {
+            margin-top: 15px;
+            width: 100%;
+            border: 2px dashed var(--border-color);
+            background: transparent;
+            color: var(--text-muted);
+            padding: 14px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .add-item-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(14, 165, 233, 0.05);
+        }
+        .input-with-icon {
+            position: relative;
+        }
+        .input-with-icon span {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .input-with-icon input {
+            padding-left: 35px;
+        }
     </style>
 </head>
 <body>
@@ -23,19 +105,19 @@
         <div class="page-header">
             <div class="header-title">
                 <h1><i class="fas fa-file-invoice-dollar"></i> Gerenciar Orçamentos</h1>
+                <p>Crie orçamentos detalhados e envie para seus clientes</p>
             </div>
             <button class="btn-primary" onclick="abrirModalOrcamento()">
                 <i class="fas fa-plus"></i> Novo Orçamento
             </button>
         </div>
-
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
+                        <th>Nº</th>
                         <th>Cliente</th>
                         <th>Data</th>
-                        <th>Validade</th>
                         <th>Valor Total</th>
                         <th>Ações</th>
                     </tr>
@@ -45,56 +127,109 @@
         </div>
     </main>
 
+    <!-- Modal Novo Orçamento Melhorado -->
     <div id="orcamentoModal" class="modal">
         <div class="modal-content modal-large">
             <div class="modal-header">
-                <h2 id="modalTitleOrcamento"><i class="fas fa-file-alt"></i> Orçamento</h2>
+                <h2 id="modalTitleOrcamento"><i class="fas fa-file-signature"></i> Criação de Orçamento</h2>
                 <span class="close" onclick="fecharModalOrcamento()">&times;</span>
             </div>
             <form id="orcamentoForm">
                 <input type="hidden" id="orcamentoId">
+                
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Cliente *</label>
+                        <label>Cliente do Orçamento *</label>
                         <select id="clienteSelect" required></select>
                     </div>
                     <div class="form-group">
-                        <label>Data *</label>
+                        <label>Data de Emissão *</label>
                         <input type="date" id="dataOrcamento" required>
                     </div>
                 </div>
                 
                 <div class="items-section">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                        <h3>Itens do Orçamento</h3>
-                        <button type="button" class="btn-secondary" onclick="adicionarLinhaItem()">+ Adicionar Item</button>
+                    <div class="items-header-row">
+                        <div>Descrição do Serviço ou Peça</div>
+                        <div>Qtd</div>
+                        <div>Valor Unitário</div>
+                        <div>Subtotal</div>
+                        <div></div>
                     </div>
-                    <!-- Cabeçalho das colunas dos itens -->
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; font-size: 12px; color: var(--text-muted); margin-bottom: 5px;">
-                        <div>Serviço/Peça</div><div>Qtd</div><div>V. Unitário</div><div>Subtotal</div><div></div>
-                    </div>
+                    
                     <div id="container-itens"></div>
-                </div>
+                    
+                    <button type="button" class="add-item-btn" onclick="adicionarLinhaItem()">
+                        <i class="fas fa-plus"></i> Adicionar Item ao Orçamento
+                    </button>
 
-                <div style="text-align: right; font-size: 20px; margin: 20px;">
-                    <strong>Total: <span style="color: #48bb78;">R$ <span id="displayTotal">0.00</span></span></strong>
-                    <input type="hidden" id="valorTotal" value="0">
+                    <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <span style="font-size: 15px; color: var(--text-muted); margin-right: 15px; text-transform: uppercase; font-weight: 600;">Total Geral:</span>
+                        <strong style="font-size: 28px; color: #10b981;">R$ <span id="displayTotal">0.00</span></strong>
+                        <input type="hidden" id="valorTotal" value="0">
+                    </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Validade (Dias) *</label>
+                        <label>Validade da Proposta (Dias) *</label>
                         <input type="number" id="validade" value="15" required>
                     </div>
                     <div class="form-group">
-                        <label>Condições de Pagamento / Obs</label>
-                        <input type="text" id="observacoesOrcamento" placeholder="Ex: 50% entrada, 50% fim">
+                        <label>Condições de Pagamento e Observações</label>
+                        <input type="text" id="observacoesOrcamento" placeholder="Ex: 50% na aprovação, 50% na entrega">
                     </div>
                 </div>
-
+                
                 <div class="form-actions">
                     <button type="button" class="btn-secondary" onclick="fecharModalOrcamento()">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Orçamento</button>
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar Orçamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Aprovar Orçamento (Gerar Serviço) -->
+    <div id="aprovarModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-check-circle" style="color: var(--success);"></i> Aprovar & Gerar Serviço</h2>
+                <span class="close" onclick="fecharModalAprovar()">&times;</span>
+            </div>
+            <form id="aprovarForm">
+                <input type="hidden" id="aprovOrcamentoId">
+                <div style="padding: 0 24px 15px 24px;">
+                    <p style="color: var(--text-muted); font-size: 14px;">O cliente aprovou o orçamento? Agende a data, hora e o técnico responsável pela execução:</p>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tipo de Serviço Principal *</label>
+                        <select id="aprovTipoServico" required>
+                            <option value="Manutenção Preventiva">Manutenção Preventiva</option>
+                            <option value="Manutenção Corretiva">Manutenção Corretiva</option>
+                            <option value="Instalação" selected>Instalação</option>
+                            <option value="Limpeza">Limpeza</option>
+                            <option value="Recarga de Gás">Recarga de Gás</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Técnico Responsável *</label>
+                        <select id="aprovColaborador" required></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data Agendada *</label>
+                        <input type="date" id="aprovData" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora Agendada *</label>
+                        <input type="time" id="aprovHora" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="fecharModalAprovar()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="background: var(--success); border-color: var(--success);"><i class="fas fa-calendar-check"></i> Confirmar Agendamento</button>
                 </div>
             </form>
         </div>
