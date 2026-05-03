@@ -219,3 +219,26 @@ async function concluirServicoDB(id, forma_pagamento, valor_pago, data_venciment
     const { data, error } = await supabaseClient.from('servicos').update(payload).eq('id', id).select();
     if (error) throw error; return data;
 }
+// ==========================================
+// CRUD DESPESAS / SAÍDAS
+// ==========================================
+async function getDespesas() {
+    const { data, error } = await supabaseClient.from('despesas').select('*').order('data', { ascending: false });
+    if (error) console.error('Erro ao buscar despesas:', error);
+    return data || [];
+}
+
+async function salvarDespesa(despesa) {
+    if (despesa.id) {
+        const { data, error } = await supabaseClient.from('despesas').update(despesa).eq('id', despesa.id).select();
+        if (error) throw error; return data;
+    } else {
+        delete despesa.id;
+        const { data, error } = await supabaseClient.from('despesas').insert([despesa]).select();
+        if (error) throw error; return data;
+    }
+}
+
+async function deletarDespesa(id) {
+    await supabaseClient.from('despesas').delete().eq('id', id);
+}

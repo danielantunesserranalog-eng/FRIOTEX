@@ -12,6 +12,10 @@
     <style>
         .select-fin { padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main); font-size: 13px; }
         .select-fin:focus { outline: none; border-color: var(--primary); }
+        .tabs-container { margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .tab-btn { padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+        .tab-active { background: var(--primary); color: white; }
+        .tab-inactive { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
@@ -20,61 +24,120 @@
     <main class="main-content">
         <div class="page-header">
             <div class="header-title">
-                <h1><i class="fas fa-hand-holding-usd"></i> Gestão Financeira</h1>
-                <p>Controle de recebimentos, pagamentos pendentes e fluxo de caixa</p>
+                <h1><i class="fas fa-hand-holding-usd"></i> Gestão Financeira Completa</h1>
+                <p>Controle de entradas, contas a receber, saídas e sangrias de caixa</p>
             </div>
+            <button class="btn-primary" style="background: var(--danger); border-color: var(--danger);" onclick="abrirModalSaida()">
+                <i class="fas fa-arrow-down"></i> Registrar Saída / Sangria
+            </button>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1);">
-                    <i class="fas fa-check-double" style="color: var(--success);"></i>
+                    <i class="fas fa-arrow-up" style="color: var(--success);"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>Total Recebido</h3>
+                    <h3>Total Recebido (Entradas)</h3>
                     <p id="total-recebido" style="color: var(--success);">R$ 0,00</p>
-                    <span class="stat-trend">Pagamentos já confirmados</span>
+                    <span class="stat-trend">Dinheiro no caixa/conta</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1);">
+                    <i class="fas fa-arrow-down" style="color: var(--danger);"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Total de Saídas</h3>
+                    <p id="total-saidas" style="color: var(--danger);">R$ 0,00</p>
+                    <span class="stat-trend">Despesas e Sangrias</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(14, 165, 233, 0.1);">
+                    <i class="fas fa-wallet" style="color: var(--primary);"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>Saldo Atual</h3>
+                    <p id="saldo-atual" style="color: var(--primary);">R$ 0,00</p>
+                    <span class="stat-trend">Recebido menos Saídas</span>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1);">
-                    <i class="fas fa-hourglass-half" style="color: var(--warning);"></i>
+                    <i class="fas fa-clock" style="color: var(--warning);"></i>
                 </div>
                 <div class="stat-info">
-                    <h3>A Receber</h3>
+                    <h3>A Receber (Futuro)</h3>
                     <p id="total-pendente" style="color: var(--warning);">R$ 0,00</p>
-                    <span class="stat-trend">Serviços pendentes de acerto</span>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-wallet"></i>
-                </div>
-                <div class="stat-info">
-                    <h3>Faturamento Total</h3>
-                    <p id="total-geral">R$ 0,00</p>
-                    <span class="stat-trend">Soma de todos os serviços</span>
+                    <span class="stat-trend">Próximos pagamentos</span>
                 </div>
             </div>
         </div>
 
+        <div class="tabs-container">
+            <button class="tab-btn tab-active" id="tab-entradas" onclick="mudarAbaFin('entradas')">
+                <i class="fas fa-arrow-up"></i> Entradas e Recebimentos
+            </button>
+            <button class="tab-btn tab-inactive" id="tab-saidas" onclick="mudarAbaFin('saidas')">
+                <i class="fas fa-arrow-down"></i> Saídas e Sangrias
+            </button>
+        </div>
+
         <div class="table-container">
             <table>
-                <thead>
-                    <tr>
-                        <th>Cliente / Serviço</th>
-                        <th>Valor</th>
-                        <th>Forma de Pgto</th>
-                        <th>Status do Pgto</th>
-                        <th>Ações</th>
-                    </tr>
+                <thead id="fin-thead">
+                    <!-- Gerado pelo JS -->
                 </thead>
                 <tbody id="financeiro-list">
-                    <tr><td colspan="5" style="text-align: center;">Carregando dados financeiros...</td></tr>
+                    <tr><td colspan="6" style="text-align: center;">Carregando dados financeiros...</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
+
+    <!-- Modal Nova Saída -->
+    <div id="saidaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-minus-circle" style="color: var(--danger);"></i> Registrar Saída de Caixa</h2>
+                <span class="close" onclick="fecharModalSaida()">&times;</span>
+            </div>
+            <form id="saidaForm">
+                <input type="hidden" id="saidaId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Categoria *</label>
+                        <select id="saidaCategoria" required>
+                            <option value="Sangria (Retirada de Sócio)">Sangria (Retirada de Sócio)</option>
+                            <option value="Compra de Peças/Material">Compra de Peças/Material</option>
+                            <option value="Ferramentas">Ferramentas e Equipamentos</option>
+                            <option value="Combustível/Transporte">Combustível/Transporte</option>
+                            <option value="Alimentação">Alimentação</option>
+                            <option value="Impostos/Taxas">Impostos/Taxas</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data *</label>
+                        <input type="date" id="saidaData" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$) *</label>
+                    <input type="number" id="saidaValor" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Por que? (Motivo / Descrição) *</label>
+                    <textarea id="saidaMotivo" rows="2" placeholder="Detalhe o motivo desta saída..." required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="fecharModalSaida()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="background: var(--danger); border-color: var(--danger);">Salvar Saída</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="../js/database.js"></script>
     <script src="../js/menu.js"></script>
