@@ -318,68 +318,127 @@ async function visualizarOrcamento(id) {
 
 function fecharModalVisualizarOrcamento() { document.getElementById('visualizarOrcamentoModal').style.display = 'none'; }
 
+// ==========================================
+// GERAÇÃO DE PDF PROFISSIONAL AVANÇADO
+// ==========================================
 async function gerarPDF(id) {
     const orcamento = orcGlobais.find(o => o.id === id);
     const clientes = await getClientes();
     const cliente = clientes.find(c => c.id == orcamento.cliente_id);
     const empresa = await getEmpresa();
     
+    // Fallbacks para dados faltantes
     const empresaNome = empresa?.nome_empresa || 'NOME DA EMPRESA';
     const empresaCnpj = empresa?.cnpj || '00.000.000/0001-00';
-    const empresaEndereco = empresa?.endereco || 'Endereço cadastrado';
+    const empresaEndereco = empresa?.endereco || 'Endereço não cadastrado';
     const empresaTelefone = empresa?.telefone || '(00) 00000-0000';
     
     if (!orcamento || !cliente) return;
-    const itensHTML = (orcamento.itens || []).map(item => `
-        <tr>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 13px;">${item.descricao}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #475569; font-size: 13px;">${item.quantidade}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #475569; font-size: 13px;">R$ ${item.valorUnitario.toFixed(2)}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: #0f172a; font-size: 13px;">R$ ${item.subtotal.toFixed(2)}</td>
+    
+    // Tratamento e formatação dos dados do cliente
+    const enderecoCliente = cliente.cidade ? `${cliente.rua || ''}, ${cliente.numero || 'S/N'} - ${cliente.bairro || ''}, ${cliente.cidade || ''}/${cliente.estado || ''}` : 'Endereço não cadastrado';
+    const clienteEmail = cliente.email ? cliente.email : 'Não informado';
+    const clienteTel = cliente.telefone ? cliente.telefone : 'Não informado';
+
+    // Criação das linhas da tabela com estilo Zebra (cores alternadas)
+    const itensHTML = (orcamento.itens || []).map((item, index) => {
+        const bgCor = index % 2 === 0 ? '#ffffff' : '#f8fafc'; // Efeito zebra
+        return `
+        <tr style="background-color: ${bgCor};">
+            <td style="padding: 12px 15px; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 12px;">${item.descricao}</td>
+            <td style="padding: 12px 15px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #475569; font-size: 12px;">${item.quantidade}</td>
+            <td style="padding: 12px 15px; border-bottom: 1px solid #e2e8f0; text-align: right; color: #475569; font-size: 12px;">R$ ${item.valorUnitario.toFixed(2)}</td>
+            <td style="padding: 12px 15px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 700; color: #0f172a; font-size: 12px;">R$ ${item.subtotal.toFixed(2)}</td>
         </tr>
-    `).join('');
+    `}).join('');
     
     const pdfContainer = document.getElementById('pdf-container');
+    
+    // Montagem do HTML com visual corporativo de alto nível e linhas de assinatura
     pdfContainer.innerHTML = `
-        <div id="documento-pdf" style="padding: 40px; background: white; color: #334155; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; position: relative; min-height: 1040px; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 3px solid #0ea5e9; padding-bottom: 25px; margin-bottom: 35px;">
-                <div>
-                    <h1 style="color: #0f172a; margin: 0; font-size: 34px; font-weight: 800;">${empresaNome}</h1>
-                    <div style="margin-top: 15px; font-size: 12px; color: #64748b; line-height: 1.6;">
-                        <p style="margin:0;">CNPJ: ${empresaCnpj}</p><p style="margin:0;">${empresaEndereco}</p><p style="margin:0;">${empresaTelefone}</p>
+        <div id="documento-pdf" style="padding: 40px 50px; background: white; color: #334155; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; position: relative; min-height: 1040px; box-sizing: border-box;">
+            
+            <!-- CABEÇALHO -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0ea5e9; padding-bottom: 25px; margin-bottom: 30px;">
+                <div style="max-width: 60%;">
+                    <h1 style="color: #0f172a; margin: 0; font-size: 26px; font-weight: 800; text-transform: uppercase;">${empresaNome}</h1>
+                    <div style="margin-top: 12px; font-size: 12px; color: #64748b; line-height: 1.6;">
+                        <p style="margin:0;"><strong>CNPJ:</strong> ${empresaCnpj}</p>
+                        <p style="margin:0;"><strong>Endereço:</strong> ${empresaEndereco}</p>
+                        <p style="margin:0;"><strong>Contato:</strong> ${empresaTelefone}</p>
                     </div>
                 </div>
-                <div style="text-align: right;">
-                    <h2 style="margin: 0; color: #0f172a; font-size: 28px; font-weight: 700;">ORÇAMENTO</h2>
-                    <p style="margin: 8px 0 0 0; color: #64748b; font-size: 14px;">Nº <strong style="color:#0f172a;">${orcamento.id.toString().padStart(6, '0')}</strong></p>
-                    <div style="margin-top: 20px; display: inline-block; text-align: right; background: #f8fafc; padding: 12px 16px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 12px;">
-                        <p style="margin: 0 0 6px 0;"><strong style="color: #475569;">Data:</strong> ${new Date(orcamento.data).toLocaleDateString('pt-BR')}</p>
+                <div style="text-align: right; max-width: 40%;">
+                    <h2 style="margin: 0; color: #0ea5e9; font-size: 28px; font-weight: 800; letter-spacing: 1px;">ORÇAMENTO</h2>
+                    <p style="margin: 8px 0 0 0; color: #0f172a; font-size: 16px; font-weight: 700;">Nº ${orcamento.id.toString().padStart(5, '0')}</p>
+                    <div style="margin-top: 15px; display: inline-block; text-align: right; background: #f8fafc; padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 11px;">
+                        <p style="margin: 0 0 5px 0;"><strong style="color: #475569;">Data Emissão:</strong> ${new Date(orcamento.data).toLocaleDateString('pt-BR')}</p>
+                        <p style="margin: 0;"><strong style="color: #475569;">Validade (Dias):</strong> ${orcamento.validade}</p>
                     </div>
                 </div>
             </div>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0ea5e9; border-radius: 6px; padding: 20px; margin-bottom: 35px;">
-                <h3 style="margin: 0 0 15px 0; color: #0f172a; font-size: 14px; text-transform: uppercase;">Dados do Orçamento</h3>
-                <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                    <div style="flex: 1;"><p style="margin: 0 0 8px 0;"><strong style="color: #475569;">Cliente:</strong> <span style="color: #0f172a; font-weight: 500;">${cliente.nome}</span></p></div>
-                </div>
-            </div>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-                <thead>
-                    <tr>
-                        <th style="background: #0f172a; color: white; padding: 14px 12px; text-align: left; font-size: 12px;">Descrição</th>
-                        <th style="background: #0f172a; color: white; padding: 14px 12px; text-align: center; font-size: 12px;">Qtd</th>
-                        <th style="background: #0f172a; color: white; padding: 14px 12px; text-align: right; font-size: 12px;">V. Unit.</th>
-                        <th style="background: #0ea5e9; color: white; padding: 14px 12px; text-align: right; font-size: 12px;">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>${itensHTML}</tbody>
-            </table>
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
-                <div style="width: 320px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #cbd5e1; padding-top: 15px; font-size: 22px; font-weight: 700; color: #0f172a;">
-                        <span>Total Geral:</span><span style="color: #0ea5e9;">R$ ${parseFloat(orcamento.valor).toFixed(2)}</span>
+
+            <!-- INFORMAÇÕES DO CLIENTE -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 5px solid #0f172a; border-radius: 6px; padding: 18px 20px; margin-bottom: 35px;">
+                <h3 style="margin: 0 0 12px 0; color: #0f172a; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Dados do Cliente</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 12px; color: #334155;">
+                    <div>
+                        <p style="margin: 0 0 8px 0;"><strong>Nome/Razão Social:</strong> <span style="color: #0f172a; font-weight: 600;">${cliente.nome}</span></p>
+                        <p style="margin: 0;"><strong>Endereço:</strong> ${enderecoCliente}</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0 0 8px 0;"><strong>Telefone:</strong> ${clienteTel}</p>
+                        <p style="margin: 0;"><strong>E-mail:</strong> ${clienteEmail}</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- TABELA DE ITENS -->
+            <h3 style="margin: 0 0 12px 0; color: #0f172a; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Descrição dos Serviços / Peças</h3>
+            <div style="border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; margin-bottom: 25px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="background: #0f172a; color: white; padding: 12px 15px; text-align: left; font-size: 12px; font-weight: 600;">Descrição</th>
+                            <th style="background: #0f172a; color: white; padding: 12px 15px; text-align: center; font-size: 12px; font-weight: 600;">Qtd</th>
+                            <th style="background: #0f172a; color: white; padding: 12px 15px; text-align: right; font-size: 12px; font-weight: 600;">V. Unit.</th>
+                            <th style="background: #0ea5e9; color: white; padding: 12px 15px; text-align: right; font-size: 12px; font-weight: 700;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${itensHTML}</tbody>
+                </table>
+            </div>
+
+            <!-- VALOR TOTAL E CONDIÇÕES DE PAGAMENTO -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 60px; page-break-inside: avoid;">
+                <div style="width: 60%; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 18px; border-radius: 6px;">
+                    <h4 style="margin: 0 0 8px 0; color: #166534; font-size: 12px; text-transform: uppercase;">Condições e Observações</h4>
+                    <p style="margin: 0; font-size: 12px; color: #15803d; line-height: 1.6; white-space: pre-wrap;">${orcamento.observacoes || 'Pagamento na aprovação ou conclusão do serviço, salvo negociação prévia. Valores sujeitos a alteração após o vencimento da proposta.'}</p>
+                </div>
+                <div style="width: 35%; background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #cbd5e1; text-align: right; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <p style="margin: 0 0 5px 0; font-size: 12px; color: #64748b; text-transform: uppercase;">Total do Orçamento</p>
+                    <p style="margin: 0; font-size: 26px; font-weight: 800; color: #0ea5e9;">R$ ${parseFloat(orcamento.valor).toFixed(2)}</p>
+                </div>
+            </div>
+
+            <!-- ASSINATURAS -->
+            <div style="margin-top: 50px; display: flex; justify-content: space-between; text-align: center; page-break-inside: avoid;">
+                <div style="width: 42%;">
+                    <div style="border-top: 1px solid #475569; margin-bottom: 12px; width: 100%;"></div>
+                    <p style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">${empresaNome}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 11px; color: #64748b;">CNPJ: ${empresaCnpj}</p>
+                </div>
+                <div style="width: 42%;">
+                    <div style="border-top: 1px solid #475569; margin-bottom: 12px; width: 100%;"></div>
+                    <p style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">${cliente.nome}</p>
+                    <p style="margin: 4px 0 0 0; font-size: 11px; color: #64748b;">De acordo / Aceite do Cliente</p>
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #64748b;">___ / ___ / 20___</p>
+                </div>
+            </div>
+            
+            <!-- RODAPÉ -->
+            <div style="position: absolute; bottom: 30px; left: 0; width: 100%; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 15px; margin: 0 50px; width: calc(100% - 100px);">
+                Documento gerado eletronicamente pelo Sistema FRIOTEX
             </div>
         </div>
     `;
@@ -387,10 +446,14 @@ async function gerarPDF(id) {
     
     // Retornamos a promessa para o WhatsApp saber quando terminou de baixar
     return html2pdf().set({
-        margin: 0, filename: `Orcamento_${orcamento.id}.pdf`, image: { type: 'jpeg', quality: 1.0 },
-        html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' }
+        margin: 0, 
+        filename: `Orcamento_${orcamento.id}_${cliente.nome.replace(/\s+/g, '_')}.pdf`, 
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { scale: 3, useCORS: true, logging: false }, 
+        jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' }
     }).from(document.getElementById('documento-pdf')).save().then(() => {
-        pdfContainer.style.display = 'none'; pdfContainer.innerHTML = '';
+        pdfContainer.style.display = 'none'; 
+        pdfContainer.innerHTML = '';
     });
 }
 
