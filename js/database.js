@@ -13,7 +13,6 @@ async function getUsuarios() {
     if (error) console.error('Erro ao buscar users:', error);
     return data || [];
 }
-
 async function salvarUsuarioDB(usuario) {
     if (!usuario.id) {
         // Hash fixo da senha 12345
@@ -35,7 +34,6 @@ async function salvarUsuarioDB(usuario) {
         return data;
     }
 }
-
 async function resetarSenhaUsuario(id) {
     const hashPadrao = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5';
     const { error } = await supabaseClient.from('users').update({
@@ -44,7 +42,6 @@ async function resetarSenhaUsuario(id) {
     }).eq('id', id);
     if (error) throw error;
 }
-
 async function atualizarSenhaUsuario(id, novaSenhaHash) {
     const { error } = await supabaseClient.from('users').update({
         hash_da_senha: novaSenhaHash,
@@ -52,7 +49,6 @@ async function atualizarSenhaUsuario(id, novaSenhaHash) {
     }).eq('id', id);
     if (error) throw error;
 }
-
 async function deletarUsuarioDB(id) {
     const { error } = await supabaseClient.from('users').delete().eq('id', id);
     if (error) throw error;
@@ -65,7 +61,6 @@ async function getEmpresa() {
     const { data, error } = await supabaseClient.from('empresa').select('*').limit(1).maybeSingle();
     return data;
 }
-
 async function salvarEmpresa(empresa) {
     if (empresa.id) {
         const { data, error } = await supabaseClient.from('empresa').update(empresa).eq('id', empresa.id).select();
@@ -83,7 +78,6 @@ async function getColaboradores() {
     const { data, error } = await supabaseClient.from('colaboradores').select('*').order('nome');
     return data || [];
 }
-
 async function salvarColaborador(colaborador) {
     if (colaborador.id) {
         const { data, error } = await supabaseClient.from('colaboradores').update(colaborador).eq('id', colaborador.id).select();
@@ -94,7 +88,6 @@ async function salvarColaborador(colaborador) {
         if (error) throw error; return data;
     }
 }
-
 async function deletarColaborador(id) {
     await supabaseClient.from('colaboradores').delete().eq('id', id);
 }
@@ -106,7 +99,6 @@ async function getClientes() {
     const { data, error } = await supabaseClient.from('clientes').select('*').order('nome');
     return data || [];
 }
-
 async function salvarCliente(cliente) {
     if (cliente.id) {
         const { data, error } = await supabaseClient.from('clientes').update(cliente).eq('id', cliente.id).select();
@@ -117,7 +109,6 @@ async function salvarCliente(cliente) {
         if (error) throw error; return data;
     }
 }
-
 async function deletarCliente(id) {
     await supabaseClient.from('clientes').delete().eq('id', id);
 }
@@ -129,7 +120,6 @@ async function getCatalogo() {
     const { data, error } = await supabaseClient.from('catalogo_servicos').select('*').order('nome');
     return data || [];
 }
-
 async function salvarCatalogo(item) {
     if (item.id) {
         const { data, error } = await supabaseClient.from('catalogo_servicos').update(item).eq('id', item.id).select();
@@ -140,7 +130,6 @@ async function salvarCatalogo(item) {
         if (error) throw error; return data;
     }
 }
-
 async function deletarCatalogo(id) {
     await supabaseClient.from('catalogo_servicos').delete().eq('id', id);
 }
@@ -156,7 +145,6 @@ async function getServicos() {
         colaboradorNome: s.colaboradores ? s.colaboradores.nome : 'Não Atribuído'
     }));
 }
-
 async function salvarServico(servico) {
     delete servico.clienteNome;
     delete servico.colaboradorNome;
@@ -169,7 +157,6 @@ async function salvarServico(servico) {
         if (error) throw error; return data;
     }
 }
-
 async function deletarServico(id) {
     await supabaseClient.from('servicos').delete().eq('id', id);
 }
@@ -178,7 +165,6 @@ async function deletarServico(id) {
 // CRUD ORÇAMENTOS
 // ==========================================
 async function getOrcamentos() {
-    // Buscamos o telefone do cliente também para o WhatsApp
     const { data, error } = await supabaseClient.from('orcamentos').select('*, clientes(nome, telefone)').order('data', { ascending: false });
     return (data || []).map(o => ({
         ...o,
@@ -186,7 +172,6 @@ async function getOrcamentos() {
         clienteTelefone: o.clientes ? o.clientes.telefone : ''
     }));
 }
-
 async function salvarOrcamento(orcamento) {
     delete orcamento.clienteNome;
     delete orcamento.clienteTelefone;
@@ -199,19 +184,17 @@ async function salvarOrcamento(orcamento) {
         if (error) throw error; return data;
     }
 }
-
 async function deletarOrcamento(id) {
     await supabaseClient.from('orcamentos').delete().eq('id', id);
 }
 
 // ==========================================
-// FINANCEIRO
+// FINANCEIRO & DESPESAS
 // ==========================================
 async function atualizarPagamentoServico(id, status_pagamento, forma_pagamento) {
     const { data, error } = await supabaseClient.from('servicos').update({ status_pagamento, forma_pagamento }).eq('id', id).select();
     if (error) throw error; return data;
 }
-
 async function concluirServicoDB(id, forma_pagamento, valor_pago, data_vencimento, status_pagamento) {
     const payload = { status: 'Concluído', status_pagamento, forma_pagamento, valor_pago };
     if (data_vencimento) payload.data_vencimento = data_vencimento;
@@ -219,15 +202,11 @@ async function concluirServicoDB(id, forma_pagamento, valor_pago, data_venciment
     const { data, error } = await supabaseClient.from('servicos').update(payload).eq('id', id).select();
     if (error) throw error; return data;
 }
-// ==========================================
-// CRUD DESPESAS / SAÍDAS
-// ==========================================
 async function getDespesas() {
     const { data, error } = await supabaseClient.from('despesas').select('*').order('data', { ascending: false });
     if (error) console.error('Erro ao buscar despesas:', error);
     return data || [];
 }
-
 async function salvarDespesa(despesa) {
     if (despesa.id) {
         const { data, error } = await supabaseClient.from('despesas').update(despesa).eq('id', despesa.id).select();
@@ -238,7 +217,10 @@ async function salvarDespesa(despesa) {
         if (error) throw error; return data;
     }
 }
-
 async function deletarDespesa(id) {
     await supabaseClient.from('despesas').delete().eq('id', id);
+}
+async function registrarPagamentoFinanceiro(id, payload) {
+    const { data, error } = await supabaseClient.from('servicos').update(payload).eq('id', id).select();
+    if (error) throw error; return data;
 }

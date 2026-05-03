@@ -61,10 +61,10 @@ function renderizarAba() {
     if (abaFinAtual === 'entradas') {
         thead.innerHTML = `
             <tr>
-                <th>Cliente / Origem</th>
-                <th>Próx. Vencimento</th>
+                <th>Cliente / Serviço</th>
+                <th>Vencimento</th>
                 <th>Valores</th>
-                <th>Status do Pgto</th>
+                <th>Status</th>
                 <th>Ações</th>
             </tr>
         `;
@@ -83,20 +83,33 @@ function renderizarAba() {
 
             const statusAtual = s.status_pagamento || 'Pendente';
             
-            // Formata a data de vencimento se existir
+            // Lógica de visualização do vencimento
             let vencimentoBadge = '-';
             if (s.data_vencimento && valPendente > 0) {
                 const hoje = new Date().toISOString().split('T')[0];
                 const corVenc = s.data_vencimento < hoje ? 'var(--danger)' : 'var(--warning)';
                 vencimentoBadge = `<span style="color: ${corVenc}; font-weight: bold;"><i class="fas fa-calendar-alt"></i> ${new Date(s.data_vencimento).toLocaleDateString('pt-BR')}</span>`;
             } else if (statusAtual === 'Pago') {
-                vencimentoBadge = `<span style="color: var(--success);"><i class="fas fa-check"></i> Recebido</span>`;
+                vencimentoBadge = `<span style="color: var(--success);"><i class="fas fa-check"></i> Quitado</span>`;
             }
 
+            // Exibição dos valores exatos do que já foi pago e falta
             let infoValores = `<strong>R$ ${valorTotal.toFixed(2)}</strong>`;
-            if (statusAtual === 'Parcial' && valPendente > 0) {
+            if (valPago > 0 && valPendente > 0) {
                 infoValores += `<br><small style="color:var(--success);">Pago: R$ ${valPago.toFixed(2)}</small>`;
                 infoValores += `<br><small style="color:var(--warning);">Falta: R$ ${valPendente.toFixed(2)}</small>`;
+            }
+
+            // Botão ou Badge de Status
+            let btnAcao = '';
+            let badgeStatus = '';
+            
+            if (statusAtual === 'Pago') {
+                badgeStatus = `<span class="status-badge status-success">Pago</span>`;
+                btnAcao = `<span style="color: var(--text-muted); font-size: 13px;">Nenhuma ação</span>`;
+            } else {
+                badgeStatus = `<span class="status-badge status-warning">${statusAtual}</span>`;
+                btnAcao = `<button class="btn-primary" style="padding: 6px 12px; font-size: 12px; background: var(--success); border-color: var(--success);" onclick="abrirModalReceber(${s.id})"><i class="fas fa-hand-holding-usd"></i> Receber</button>`;
             }
 
             return `
@@ -104,18 +117,8 @@ function renderizarAba() {
                     <td><strong>${s.clienteNome}</strong><br><small style="color:var(--text-muted)">Serviço: ${new Date(s.data).toLocaleDateString('pt-BR')}</small></td>
                     <td>${vencimentoBadge}</td>
                     <td>${infoValores}</td>
-                    <td>
-                        <select id="status-${s.id}" class="select-fin" style="font-weight: 600; color: ${statusAtual === 'Pago' ? 'var(--success)' : (statusAtual === 'Parcial' ? 'var(--warning)' : 'var(--danger)')}">
-                            <option value="Pendente" ${statusAtual === 'Pendente' ? 'selected' : ''}>Pendente</option>
-                            <option value="Parcial" ${statusAtual === 'Parcial' ? 'selected' : ''} ${statusAtual !== 'Parcial' ? 'disabled' : ''}>Parcial</option>
-                            <option value="Pago" ${statusAtual === 'Pago' ? 'selected' : ''}>Pago Total</option>
-                        </select>
-                    </td>
-                    <td>
-                        <button class="btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="atualizarStatusEntrada(${s.id})">
-                            <i class="fas fa-save"></i> Atualizar
-                        </button>
-                    </td>
+                    <td>${badgeStatus}</td>
+                    <td>${btnAcao}</td>
                 </tr>
             `;
         }).join('');
@@ -149,20 +152,6 @@ function renderizarAba() {
                 </tr>
             `;
         }).join('');
-    }
-}
-
-async function atualizarStatusEntrada(id) {
-    const statusVal = document.getElementById(`status-${id}`).value;
-    const btn = document.querySelector(`#row-fin-${id} button`);
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    try {
-        // O Supabase atualizará apenas o status (a forma a gente assume que se manteve ou foi acordada)
-        await atualizarPagamentoServico(id, statusVal, null);
-        await carregarTudo();
-    } catch (e) {
-        alert('Erro ao atualizar.');
     }
 }
 
@@ -208,3 +197,124 @@ async function apagarSaida(id) {
         await carregarTudo();
     }
 }
+
+// ==========================================
+// FUNÇÕES DO MODAL DE RECEBIMENTO PARCIAL E TOTAL
+// ==========================================
+function abrirModalReceber(id) {
+    const servico = servicosGerais.find(s => s.id === id);
+    if(!servico) return;
+
+    const valorTotal = parseFloat(servico.valor || 0);
+    let valPago = servico.valor_pago !== null && servico.valor_pago !== undefined ? parseFloat(servico.valor_pago) : (servico.status_pagamento === 'Pago' ? valorTotal : 0);
+    if(valPago > valorTotal) valPago = valorTotal;
+    const falta = valorTotal - valPago;
+
+    document.getElementById('recFormaAnterior').value = servico.forma_pagamento || '';
+    document.getElementById('recServicoId').value = id;
+    document.getElementById('recValorTotal').value = valorTotal;
+    document.getElementById('recValorJaPago').value = valPago;
+    
+    document.getElementById('recDisplayTotal').innerText = `R$ ${valorTotal.toFixed(2)}`;
+    document.getElementById('recDisplayJaPago').innerText = `R$ ${valPago.toFixed(2)}`;
+    document.getElementById('recDisplayFalta').innerText = `R$ ${falta.toFixed(2)}`;
+
+    const inputPagando = document.getElementById('recValorPagando');
+    inputPagando.value = '';
+    // Define o valor máximo permitido para que o usuário não pague mais do que deve
+    inputPagando.max = falta.toFixed(2);
+    
+    document.getElementById('blocoNovoRestante').style.display = 'none';
+    document.getElementById('recNovaData').required = false;
+
+    document.getElementById('receberModal').style.display = 'block';
+}
+
+function fecharModalReceber() {
+    document.getElementById('receberModal').style.display = 'none';
+}
+
+function calcularBaixa() {
+    const valorTotal = parseFloat(document.getElementById('recValorTotal').value) || 0;
+    const jaPago = parseFloat(document.getElementById('recValorJaPago').value) || 0;
+    const pagandoAgora = parseFloat(document.getElementById('recValorPagando').value) || 0;
+
+    const faltaOriginal = valorTotal - jaPago;
+    const novoFalta = faltaOriginal - pagandoAgora;
+
+    const bloco = document.getElementById('blocoNovoRestante');
+    const inputData = document.getElementById('recNovaData');
+
+    if (novoFalta > 0.001) { // Se ainda faltar algum centavo, exige nova data
+        bloco.style.display = 'block';
+        document.getElementById('recDisplayNovoFalta').innerText = `R$ ${novoFalta.toFixed(2)}`;
+        inputData.required = true;
+    } else {
+        bloco.style.display = 'none';
+        inputData.required = false;
+        inputData.value = '';
+    }
+}
+
+document.getElementById('receberForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+    btn.disabled = true;
+
+    try {
+        const id = document.getElementById('recServicoId').value;
+        const valorTotal = parseFloat(document.getElementById('recValorTotal').value);
+        const jaPago = parseFloat(document.getElementById('recValorJaPago').value);
+        const pagandoAgora = parseFloat(document.getElementById('recValorPagando').value);
+        const formaAnterior = document.getElementById('recFormaAnterior').value;
+        const formaNova = document.getElementById('recFormaPgto').value;
+
+        const novoTotalPago = jaPago + pagandoAgora;
+        const restante = valorTotal - novoTotalPago;
+
+        let statusPgto = 'Pago';
+        let dataVenc = null;
+
+        // Se sobrou saldo, é parcial
+        if (restante > 0.001) {
+            statusPgto = 'Parcial';
+            dataVenc = document.getElementById('recNovaData').value;
+        }
+
+        // Histórico de pagamentos (Ex: PIX (R$ 50) + Dinheiro (R$ 30))
+        let historicoPgto = formaAnterior;
+        const novoRegistro = `${formaNova} (R$ ${pagandoAgora.toFixed(2)})`;
+        if (historicoPgto && historicoPgto !== '') {
+            historicoPgto += ` + ${novoRegistro}`;
+        } else {
+            historicoPgto = novoRegistro;
+        }
+
+        const payload = {
+            valor_pago: novoTotalPago,
+            status_pagamento: statusPgto,
+            forma_pagamento: historicoPgto,
+            data_vencimento: dataVenc
+        };
+
+        await registrarPagamentoFinanceiro(id, payload);
+        fecharModalReceber();
+        await carregarTudo(); // Recarrega os indicadores e a tabela
+        
+        // Alerta de Sucesso
+        const msg = document.createElement('div');
+        msg.textContent = 'Pagamento baixado com sucesso!';
+        msg.style.cssText = 'position:fixed; bottom:20px; right:20px; background:var(--success); color:white; padding:12px 24px; border-radius:var(--radius-md); z-index:9999;';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 4000);
+
+    } catch(err) {
+        alert('Erro ao registrar recebimento.');
+        console.error(err);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+});
