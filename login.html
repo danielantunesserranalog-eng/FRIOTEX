@@ -39,7 +39,7 @@
             <div id="newPasswordBlock" style="display: none;">
                 <div class="form-group" style="padding: 0; margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
                     <label style="color: var(--warning);"><i class="fas fa-exclamation-triangle"></i> Troca de Senha Obrigatória</label>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Este é seu primeiro acesso. Digite uma nova senha de sua preferência.</p>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Defina uma nova senha de sua preferência.</p>
                     <input type="password" id="newPassword" placeholder="Nova Senha Oculta">
                 </div>
             </div>
@@ -77,7 +77,6 @@
             const newPassInput = document.getElementById('newPassword').value;
 
             try {
-                // SE O USUÁRIO ESTIVER TROCANDO A SENHA
                 if (userRequiresChange) {
                     if (!newPassInput || newPassInput.length < 4) {
                         msgDiv.innerText = 'A nova senha deve ter no mínimo 4 caracteres.';
@@ -85,62 +84,52 @@
                         return;
                     }
                     const newHash = await gerarHash(newPassInput);
-                    const { error: updateErr } = await supabaseClient.from('usuarios')
-                        .update({ password_hash: newHash, must_change_password: false })
+                    // Atualiza usando os nomes exatos da sua imagem
+                    const { error: updateErr } = await supabaseClient.from('usuários')
+                        .update({ hash_da_senha: newHash, deve_alterar_a_senha: false })
                         .eq('id', userRequiresChange.id);
                     
                     if(updateErr) {
-                        msgDiv.innerHTML = 'Erro ao salvar senha: ' + updateErr.message;
-                        btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
-                        return;
+                        msgDiv.innerHTML = 'Erro: ' + updateErr.message;
+                        btn.innerHTML = 'Entrar'; return;
                     }
                     
-                    iniciarSessao(userRequiresChange.username, userRequiresChange.role);
+                    iniciarSessao(userRequiresChange.nome_de_usuário, userRequiresChange.papel);
                     return;
                 }
 
                 const passHash = await gerarHash(pass);
                 
-                // BUSCA À PROVA DE FALHAS: Puxa todo mundo para o Javascript verificar
-                const { data, error } = await supabaseClient.from('usuarios').select('*');
+                // Busca na tabela com acento
+                const { data, error } = await supabaseClient.from('usuários').select('*');
 
                 if (error) {
-                    msgDiv.innerHTML = 'Erro no Supabase: ' + error.message;
-                    btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
-                    return;
+                    msgDiv.innerHTML = 'Erro no Banco: ' + error.message;
+                    btn.innerHTML = 'Entrar'; return;
                 }
 
-                if (!data || data.length === 0) {
-                    msgDiv.innerHTML = 'O banco conectou, mas a tabela está VAZIA. O usuário ADMIN não existe.';
-                    btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
-                    return;
-                }
-
-                // Procura o usuário na lista que voltou do banco
-                const userFound = data.find(u => u.username === user && u.password_hash === passHash);
+                // Procura usando os nomes das colunas da sua imagem
+                const userFound = data.find(u => u.nome_de_usuário === user && u.hash_da_senha === passHash);
 
                 if (!userFound) {
                     msgDiv.innerText = 'Usuário ou senha incorretos.';
-                    btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
-                    return;
+                    btn.innerHTML = 'Entrar'; return;
                 }
 
-                // Verifica se é o primeiro acesso
-                if (userFound.must_change_password) {
+                if (userFound.deve_alterar_a_senha) {
                     userRequiresChange = userFound;
                     document.getElementById('newPasswordBlock').style.display = 'block';
                     document.getElementById('username').readOnly = true;
                     document.getElementById('password').readOnly = true;
                     document.getElementById('newPassword').required = true;
-                    msgDiv.innerText = 'Defina uma nova senha para continuar.';
-                    msgDiv.style.color = 'var(--warning)';
-                    btn.innerHTML = 'Salvar e Entrar <i class="fas fa-save"></i>';
+                    msgDiv.innerText = 'Defina uma nova senha.';
+                    btn.innerHTML = 'Salvar e Entrar';
                 } else {
-                    iniciarSessao(userFound.username, userFound.role);
+                    iniciarSessao(userFound.nome_de_usuário, userFound.papel);
                 }
             } catch (err) {
-                msgDiv.innerText = 'Erro crítico de conexão.';
-                btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
+                msgDiv.innerText = 'Erro crítico.';
+                btn.innerHTML = 'Entrar';
             }
         });
 
