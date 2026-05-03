@@ -24,12 +24,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         // Gera o hash da senha digitada
         const hashDigitado = await hashPassword(passwordDigitada);
 
-        // Busca o usuário no Supabase
+        // Busca o usuário no Supabase (usando maybeSingle para evitar erro 406)
         const { data: usuario, error } = await supabaseClient
             .from('users')
             .select('*')
             .eq('nome_de_usuario', usernameDigitado)
-            .single();
+            .maybeSingle();
 
         // Verifica se houve erro na busca ou se o usuário não existe
         if (error || !usuario) {

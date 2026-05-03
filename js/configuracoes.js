@@ -51,17 +51,23 @@ async function carregarListaUsuarios() {
         return;
     }
     
-    tbody.innerHTML = usuarios.map(u => `
+    tbody.innerHTML = usuarios.map(u => {
+        // Verifica se o usuário precisa trocar a senha e cria um crachá bonito
+        const statusSenha = u.deve_alterar_senha 
+            ? '<br><span class="status-badge status-warning" style="margin-top:4px; font-size:10px;"><i class="fas fa-clock"></i> Senha Pendente (12345)</span>' 
+            : '<br><span class="status-badge status-success" style="margin-top:4px; font-size:10px;"><i class="fas fa-check"></i> Acesso Ativo</span>';
+        
+        return `
         <tr>
-            <td style="padding: 10px;"><strong>${u.username}</strong> ${u.must_change_password ? '<span style="color:var(--warning); font-size:10px;" title="Senha Pendente"><i class="fas fa-clock"></i></span>' : ''}</td>
-            <td style="padding: 10px;"><span class="status-badge ${u.role === 'Admin' ? 'status-info' : 'status-warning'}">${u.role}</span></td>
+            <td style="padding: 10px;"><strong>${u.nome_de_usuario}</strong> ${statusSenha}</td>
+            <td style="padding: 10px;"><span class="status-badge ${u.papel === 'Admin' ? 'status-info' : 'status-warning'}">${u.papel}</span></td>
             <td style="padding: 10px;" class="actions">
-                <button class="btn-icon" onclick="editarUsuario(${u.id}, '${u.username}', '${u.role}')" title="Editar"><i class="fas fa-edit"></i></button>
+                <button class="btn-icon" onclick="editarUsuario(${u.id}, '${u.nome_de_usuario}', '${u.papel}')" title="Editar"><i class="fas fa-edit"></i></button>
                 <button class="btn-icon" onclick="resetarSenha(${u.id})" title="Resetar Senha para 12345"><i class="fas fa-key"></i></button>
-                <button class="btn-icon" style="color: var(--danger);" onclick="apagarUsuario(${u.id}, '${u.username}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                <button class="btn-icon" style="color: var(--danger);" onclick="apagarUsuario(${u.id}, '${u.nome_de_usuario}')" title="Excluir"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function abrirModalUsuario() {

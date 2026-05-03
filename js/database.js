@@ -8,7 +8,7 @@ const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 // ==========================================
 // GERENCIAMENTO DE users
 // ==========================================
-async function getusers() {
+async function getUsuarios() {
     const { data, error } = await supabaseClient.from('users').select('*').order('nome_de_usuario');
     if (error) console.error('Erro ao buscar users:', error);
     return data || [];
