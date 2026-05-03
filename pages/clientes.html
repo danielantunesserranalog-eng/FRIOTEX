@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clientes - FRIOTEX</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="menu-container"></div>
+    
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-users"></i> Gerenciar Clientes</h1>
+                <p>Cadastre e gerencie todos os seus clientes</p>
+            </div>
+            <button class="btn-primary" onclick="abrirModalCliente()">
+                <i class="fas fa-plus"></i> Novo Cliente
+            </button>
+        </div>
+
+        <div class="filters-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-cliente" placeholder="Buscar cliente por nome, telefone ou email..." onkeyup="filtrarClientes()">
+            </div>
+            <div class="filter-actions">
+                <button class="btn-secondary" onclick="filtrarClientes()">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+                <button class="btn-secondary" onclick="limparFiltro()">
+                    <i class="fas fa-eraser"></i> Limpar
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-user"></i> Nome</th>
+                        <th><i class="fas fa-phone"></i> Telefone</th>
+                        <th><i class="fas fa-envelope"></i> Email</th>
+                        <th><i class="fas fa-map-marker-alt"></i> Endereço</th>
+                        <th><i class="fas fa-cogs"></i> Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="clientes-list"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="clienteModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <div>
+                    <h2 id="modalTitle"><i class="fas fa-user-plus"></i> Novo Cliente</h2>
+                    <p>Preencha os dados do cliente</p>
+                </div>
+                <span class="close" onclick="fecharModalCliente()">&times;</span>
+            </div>
+            <form id="clienteForm">
+                <input type="hidden" id="clienteId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Nome Completo *</label>
+                        <input type="text" id="nome" placeholder="Digite o nome completo" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-phone"></i> Telefone *</label>
+                        <input type="tel" id="telefone" placeholder="(00) 00000-0000" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="email" placeholder="cliente@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> CEP</label>
+                        <input type="text" id="cep" placeholder="00000-000" onblur="buscarCEP(this.value)" maxlength="9">
+                        <small style="color: #a0aec0; font-size: 11px;">Digite o CEP para buscar automaticamente</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Rua / Logradouro</label>
+                        <input type="text" id="rua" placeholder="Nome da rua">
+                    </div>
+                    <div class="form-group" style="max-width: 150px;">
+                        <label>Número</label>
+                        <input type="text" id="numero" placeholder="123 ou S/N">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Bairro</label>
+                        <input type="text" id="bairro" placeholder="Nome do bairro">
+                    </div>
+                    <div class="form-group">
+                        <label>Cidade</label>
+                        <input type="text" id="cidade" placeholder="Nome da cidade">
+                    </div>
+                    <div class="form-group" style="max-width: 100px;">
+                        <label>UF</label>
+                        <input type="text" id="estado" placeholder="SP" maxlength="2">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-sticky-note"></i> Observações</label>
+                    <textarea id="observacoes" rows="2" placeholder="Informações adicionais sobre o cliente..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="fecharModalCliente()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/database.js"></script>
+    <script src="../js/menu.js"></script>
+    <script src="../js/clientes.js"></script>
+</body>
+</html>

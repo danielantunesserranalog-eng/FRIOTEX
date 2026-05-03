@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações da Empresa - FRIOTEX</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="menu-container"></div>
+    
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-cog"></i> Configurações da Empresa</h1>
+                <p>Preencha os dados que aparecerão nos orçamentos e serviços</p>
+            </div>
+        </div>
+
+        <div style="background: var(--bg-surface); padding: 30px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); max-width: 800px;">
+            <form id="empresaForm">
+                <input type="hidden" id="empresaId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-building"></i> Nome da Empresa / Razão Social *</label>
+                        <input type="text" id="nome_empresa" placeholder="Ex: FRIOTEX Refrigeração" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-id-card"></i> CNPJ</label>
+                        <input type="text" id="cnpj" placeholder="00.000.000/0001-00">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fas fa-phone"></i> Telefone Comercial</label>
+                        <input type="text" id="telefone" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-map-marker-alt"></i> Endereço Completo</label>
+                        <input type="text" id="endereco" placeholder="Rua, Número - Bairro, Cidade - UF">
+                    </div>
+                </div>
+
+                <div class="form-actions" style="background: transparent; padding: 20px 0 0 0; border-top: none;">
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
+                        <i class="fas fa-save"></i> Salvar Configurações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="../js/database.js"></script>
+    <script src="../js/menu.js"></script>
+    <script src="../js/configuracoes.js"></script>
+</body>
+</html>

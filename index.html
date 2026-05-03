@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRIOTEX - Sistema de Refrigeração</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="menu-container"></div>
+    
+    <main class="main-content">
+        <div class="dashboard">
+            <div class="welcome-section">
+                <div class="welcome-text">
+                    <h1><i class="fas fa-snowflake"></i> Bem-vindo ao Sistema FRIOTEX</h1>
+                    <p>Gerencie seus serviços de refrigeração com eficiência e tecnologia</p>
+                </div>
+                <div class="date-time" id="currentDateTime"></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Clientes Ativos</h3>
+                        <p id="total-clientes">0</p>
+                        <span class="stat-trend"><i class="fas fa-chart-line"></i> Total Registrado</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Serviços em Andamento</h3>
+                        <p id="servicos-andamento">0</p>
+                        <span class="stat-trend"><i class="fas fa-clock"></i> Em execução</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Serviços Concluídos</h3>
+                        <p id="servicos-concluidos">0</p>
+                        <span class="stat-trend"><i class="fas fa-check"></i> Total Histórico</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Faturamento</h3>
+                        <p id="faturamento">R$ 0</p>
+                        <span class="stat-trend"><i class="fas fa-arrow-up"></i> Total Recebido</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-services">
+                <div class="section-header">
+                    <h2><i class="fas fa-clock"></i> Serviços Recentes</h2>
+                    <a href="pages/servicos.html" class="view-all">Ver todos <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="table-container">
+                    <table id="recent-services-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Serviço</th>
+                                <th>Data</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-services-list">
+                            <tr><td colspan="5">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/database.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/clientes.js"></script>
+    <script src="js/servicos.js"></script>
+    <script>
+        function atualizarDataHora() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('currentDateTime').innerHTML = now.toLocaleDateString('pt-BR', options);
+        }
+        
+        async function carregarEstatisticas() {
+            const clientes = await getClientes();
+            const servicos = await getServicos();
+            
+            document.getElementById('total-clientes').textContent = clientes.length;
+            document.getElementById('servicos-andamento').textContent = servicos.filter(s => s.status === 'Em andamento').length;
+            document.getElementById('servicos-concluidos').textContent = servicos.filter(s => s.status === 'Concluído').length;
+            
+            const faturamento = servicos
+                .filter(s => s.status === 'Concluído')
+                .reduce((sum, s) => sum + parseFloat(s.valor || 0), 0);
+            document.getElementById('faturamento').textContent = `R$ ${faturamento.toFixed(2)}`;
+            
+            const recentes = servicos.slice(0, 5); // Como o getServicos já vem ordenado desc
+            const tbody = document.getElementById('recent-services-list');
+            
+            if (recentes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">Nenhum serviço recente</td></tr>';
+            } else {
+                tbody.innerHTML = recentes.map(servico => `
+                    <tr>
+                        <td><strong>${servico.clienteNome}</strong></td>
+                        <td>${servico.tipo}</td>
+                        <td>${new Date(servico.data).toLocaleDateString()}</td>
+                        <td><span class="status-badge ${servico.status === 'Concluído' ? 'status-success' : servico.status === 'Em andamento' ? 'status-warning' : 'status-info'}">${servico.status}</span></td>
+                        <td class="valor">R$ ${parseFloat(servico.valor).toFixed(2)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        atualizarDataHora();
+        setInterval(atualizarDataHora, 1000);
+        carregarEstatisticas();
+    </script>
+</body>
+</html>

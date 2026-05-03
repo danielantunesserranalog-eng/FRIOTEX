@@ -1,0 +1,109 @@
+// Menu modular - carrega o menu em todas as páginas
+document.addEventListener('DOMContentLoaded', function() {
+    carregarMenu();
+    destacarMenuAtivo();
+});
+
+function carregarMenu() {
+    const currentPath = window.location.pathname;
+    const isInPages = currentPath.includes('/pages/');
+    const basePath = isInPages ? '../' : '';
+    
+    const menuHTML = `
+        <button class="menu-toggle" onclick="toggleMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-snowflake"></i> FRIOTEX</h2>
+                <p>Sistemas de Refrigeração</p>
+            </div>
+            <ul class="menu-items">
+                <li><a href="${basePath}index.html" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="${basePath}pages/clientes.html" data-page="clientes"><i class="fas fa-users"></i> Clientes</a></li>
+                <li><a href="${basePath}pages/servicos.html" data-page="servicos"><i class="fas fa-tools"></i> Serviços</a></li>
+                
+                <!-- Menu Cadastro com Submenus -->
+                <li class="has-submenu">
+                    <a href="#" onclick="toggleSubmenu(event, 'cadastro-submenu')" id="menu-cadastro">
+                        <i class="fas fa-box"></i> Cadastro <i class="fas fa-chevron-down submenu-icon"></i>
+                    </a>
+                    <ul class="submenu" id="cadastro-submenu">
+                        <li><a href="${basePath}pages/catalogo.html" data-page="catalogo"><i class="fas fa-tags"></i> Tabela de Preços</a></li>
+                    </ul>
+                </li>
+                
+                <li><a href="${basePath}pages/orcamentos.html" data-page="orcamentos"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
+                <li><a href="${basePath}pages/relatorios.html" data-page="relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
+                
+                <!-- Menu fixado na parte inferior -->
+                <li class="menu-bottom"><a href="${basePath}pages/configuracoes.html" data-page="configuracoes"><i class="fas fa-cog"></i> Configurações</a></li>
+            </ul>
+        </div>
+    `;
+    
+    const menuContainer = document.getElementById('menu-container');
+    if (menuContainer) {
+        menuContainer.innerHTML = menuHTML;
+    }
+}
+
+function toggleMenu() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+    }
+}
+
+function toggleSubmenu(event, submenuId) {
+    event.preventDefault();
+    const submenu = document.getElementById(submenuId);
+    const icon = event.currentTarget.querySelector('.submenu-icon');
+    
+    if (submenu.classList.contains('active')) {
+        submenu.classList.remove('active');
+        icon.style.transform = 'rotate(0deg)';
+    } else {
+        submenu.classList.add('active');
+        icon.style.transform = 'rotate(180deg)';
+    }
+}
+
+function destacarMenuAtivo() {
+    const currentPage = window.location.pathname.split('/').pop();
+    const links = document.querySelectorAll('.menu-items a');
+    
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        
+        const linkPage = href.split('/').pop();
+        if (linkPage === currentPage || (currentPage === '' && linkPage === 'index.html')) {
+            link.classList.add('active');
+            
+            // Abre o submenu pai automaticamente se estiver dentro de um
+            const parentSubmenu = link.closest('.submenu');
+            if (parentSubmenu) {
+                parentSubmenu.classList.add('active');
+                const parentLink = parentSubmenu.previousElementSibling;
+                if (parentLink) {
+                    parentLink.classList.add('active');
+                    const icon = parentLink.querySelector('.submenu-icon');
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+            }
+        }
+    });
+}
+
+// Fechar menu ao clicar em link no mobile
+document.addEventListener('click', function(e) {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.querySelector('.menu-toggle');
+    
+    if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
+        if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    }
+});

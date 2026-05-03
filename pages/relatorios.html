@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - FRIOTEX</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="menu-container"></div>
+    
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-chart-bar"></i> Relatórios e Análises</h1>
+                <p>Visualize métricas e indicadores do seu negócio</p>
+            </div>
+        </div>
+
+        <div class="reports-grid">
+            <div class="report-card">
+                <div class="report-header">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Relatório por Período</h3>
+                </div>
+                <div class="report-body">
+                    <div class="date-range">
+                        <div class="input-group">
+                            <label>Data Início</label>
+                            <input type="date" id="dataInicio" class="date-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Data Fim</label>
+                            <input type="date" id="dataFim" class="date-input">
+                        </div>
+                    </div>
+                    <button class="btn-primary btn-full" onclick="gerarRelatorioPeriodo()">
+                        <i class="fas fa-chart-line"></i> Gerar Relatório
+                    </button>
+                    <div id="relatorioPeriodo" class="report-results"></div>
+                </div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-header">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h3>Análise por Tipo</h3>
+                </div>
+                <div class="report-body">
+                    <button class="btn-primary btn-full" onclick="gerarRelatorioTipoServico()">
+                        <i class="fas fa-chart-pie"></i> Gerar Análise
+                    </button>
+                    <div id="relatorioTipoServico" class="report-results"></div>
+                    <canvas id="tipoChart" style="max-height: 300px; margin-top: 20px;"></canvas>
+                </div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-header">
+                    <div class="report-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3>Top Clientes</h3>
+                </div>
+                <div class="report-body">
+                    <button class="btn-primary btn-full" onclick="gerarTopClientes()">
+                        <i class="fas fa-trophy"></i> Gerar Ranking
+                    </button>
+                    <div id="topClientes" class="report-results"></div>
+                </div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-header">
+                    <div class="report-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>Performance Mensal</h3>
+                </div>
+                <div class="report-body">
+                    <button class="btn-primary btn-full" onclick="gerarPerformanceMensal()">
+                        <i class="fas fa-chart-line"></i> Analisar Performance
+                    </button>
+                    <div id="performanceMensal" class="report-results"></div>
+                    <canvas id="performanceChart" style="max-height: 300px; margin-top: 20px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/database.js"></script>
+    <script src="../js/menu.js"></script>
+    <script src="../js/clientes.js"></script>
+    <script src="../js/servicos.js"></script>
+    <script>
+        let tipoChart, performanceChart;
+        
+        async function gerarRelatorioPeriodo() {
+            const inicio = document.getElementById('dataInicio').value;
+            const fim = document.getElementById('dataFim').value;
+            
+            if (!inicio || !fim) {
+                // Se não selecionou as datas manuais, carrega tudo ou para (optei por não gerar erro na primeira vez)
+                return;
+            }
+            
+            const servicos = await getServicos();
+            const filtrados = servicos.filter(s => s.data >= inicio && s.data <= fim);
+            
+            const totalServicos = filtrados.length;
+            const totalValor = filtrados.reduce((sum, s) => sum + parseFloat(s.valor || 0), 0);
+            const concluidos = filtrados.filter(s => s.status === 'Concluído').length;
+            
+            const html = `
+                <div class="results-grid">
+                    <div class="result-card">
+                        <i class="fas fa-chart-simple"></i>
+                        <div class="result-info">
+                            <span>Total de Serviços</span>
+                            <strong>${totalServicos}</strong>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <i class="fas fa-dollar-sign"></i>
+                        <div class="result-info">
+                            <span>Valor Total</span>
+                            <strong>R$ ${totalValor.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="result-info">
+                            <span>Concluídos</span>
+                            <strong>${concluidos}</strong>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <i class="fas fa-chart-line"></i>
+                        <div class="result-info">
+                            <span>Taxa de Conclusão</span>
+                            <strong>${totalServicos > 0 ? ((concluidos/totalServicos)*100).toFixed(1) : 0}%</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-label">Progresso</div>
+                    <div class="progress">
+                        <div class="progress-fill" style="width: ${totalServicos > 0 ? (concluidos/totalServicos)*100 : 0}%"></div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('relatorioPeriodo').innerHTML = html;
+        }
+        
+        async function gerarRelatorioTipoServico() {
+            const servicos = await getServicos();
+            const tipos = {};
+            
+            servicos.forEach(servico => {
+                if (!tipos[servico.tipo]) {
+                    tipos[servico.tipo] = { total: 0, count: 0 };
+                }
+                tipos[servico.tipo].total += parseFloat(servico.valor || 0);
+                tipos[servico.tipo].count++;
+            });
+            
+            let html = '<div class="results-list">';
+            for (const [tipo, dados] of Object.entries(tipos)) {
+                html += `
+                    <div class="result-item">
+                        <div class="result-item-header">
+                            <strong>${tipo}</strong>
+                            <span class="badge">${dados.count} serviços</span>
+                        </div>
+                        <div class="result-item-details">
+                            <span>💰 Total: R$ ${dados.total.toFixed(2)}</span>
+                            <span>📊 Ticket Médio: R$ ${(dados.total/dados.count).toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            document.getElementById('relatorioTipoServico').innerHTML = html;
+            
+            const ctx = document.getElementById('tipoChart').getContext('2d');
+            if (tipoChart) tipoChart.destroy();
+            
+            tipoChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(tipos),
+                    datasets: [{
+                        data: Object.values(tipos).map(d => d.total),
+                        backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0']
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+            });
+        }
+        
+        async function gerarTopClientes() {
+            const servicos = await getServicos();
+            const clientes = {};
+            
+            servicos.forEach(servico => {
+                if (!clientes[servico.clienteNome]) {
+                    clientes[servico.clienteNome] = { total: 0, count: 0 };
+                }
+                clientes[servico.clienteNome].total += parseFloat(servico.valor || 0);
+                clientes[servico.clienteNome].count++;
+            });
+            
+            const ranking = Object.entries(clientes)
+                .sort((a, b) => b[1].total - a[1].total)
+                .slice(0, 5);
+            
+            let html = '<div class="ranking-list">';
+            ranking.forEach(([cliente, dados], index) => {
+                html += `
+                    <div class="ranking-item">
+                        <div class="ranking-position ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}">
+                            ${index + 1}º
+                        </div>
+                        <div class="ranking-info">
+                            <div class="ranking-name">${cliente}</div>
+                            <div class="ranking-stats">
+                                <span>📝 ${dados.count} serviços</span>
+                                <span>💰 R$ ${dados.total.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('topClientes').innerHTML = html;
+        }
+        
+        async function gerarPerformanceMensal() {
+            const servicos = await getServicos();
+            const meses = {};
+            
+            servicos.forEach(servico => {
+                const mes = servico.data.substring(0, 7);
+                if (!meses[mes]) {
+                    meses[mes] = { total: 0, count: 0 };
+                }
+                meses[mes].total += parseFloat(servico.valor || 0);
+                meses[mes].count++;
+            });
+            
+            const mesesOrdenados = Object.keys(meses).sort();
+            const valores = mesesOrdenados.map(m => meses[m].total);
+            const quantidades = mesesOrdenados.map(m => meses[m].count);
+            
+            let html = '<div class="results-list">';
+            mesesOrdenados.forEach(mes => {
+                const [ano, mesNum] = mes.split('-');
+                const nomeMes = new Date(ano, mesNum - 1).toLocaleString('pt-BR', { month: 'long' });
+                html += `
+                    <div class="result-item">
+                        <div class="result-item-header">
+                            <strong>${nomeMes}/${ano}</strong>
+                        </div>
+                        <div class="result-item-details">
+                            <span>📊 Serviços: ${meses[mes].count}</span>
+                            <span>💰 Faturamento: R$ ${meses[mes].total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            document.getElementById('performanceMensal').innerHTML = html;
+            
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (performanceChart) performanceChart.destroy();
+            
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mesesOrdenados.map(m => {
+                        const [ano, mesNum] = m.split('-');
+                        return new Date(ano, mesNum - 1).toLocaleString('pt-BR', { month: 'short' });
+                    }),
+                    datasets: [
+                        { label: 'Faturamento (R$)', data: valores, borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4, fill: true },
+                        { label: 'Quantidade', data: quantidades, borderColor: '#43e97b', backgroundColor: 'rgba(67, 233, 123, 0.1)', tension: 0.4, fill: true }
+                    ]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+            });
+        }
+        
+        // Inicializar os relatórios globais na carga da página
+        async function initRelatorios() {
+            await gerarRelatorioTipoServico();
+            await gerarTopClientes();
+            await gerarPerformanceMensal();
+        }
+        initRelatorios();
+    </script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Serviços - FRIOTEX</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/menu.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div id="menu-container"></div>
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-title">
+                <h1><i class="fas fa-tags"></i> Tabela de Preços</h1>
+                <p>Cadastre os serviços e peças para usar nos orçamentos</p>
+            </div>
+            <button class="btn-primary" onclick="abrirModalCatalogo()">
+                <i class="fas fa-plus"></i> Novo Item
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome do Serviço / Peça</th>
+                        <th>Descrição Base</th>
+                        <th>Valor Padrão (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogo-list">
+                    <tr><td colspan="4" style="text-align: center;">Carregando dados... Pressione F12 se demorar.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="catalogoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle"><i class="fas fa-tag"></i> Novo Item</h2>
+                <span class="close" onclick="fecharModalCatalogo()">&times;</span>
+            </div>
+            <form id="catalogoForm">
+                <input type="hidden" id="itemId">
+                <div class="form-group">
+                    <label>Nome do Serviço ou Peça *</label>
+                    <input type="text" id="nomeItem" required>
+                </div>
+                <div class="form-group">
+                    <label>Valor Padrão (R$) *</label>
+                    <input type="number" id="valorItem" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Descrição Opcional</label>
+                    <textarea id="descricaoItem" rows="2"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="fecharModalCatalogo()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/database.js"></script>
+    <script src="../js/menu.js"></script>
+    <script>
+        // RASTREADOR DE ERROS
+        console.log("1. Script do catalogo.html iniciou.");
+
+        async function carregarCatalogo() {
+            try {
+                console.log("2. Solicitando dados ao Supabase...");
+                const itens = await getCatalogo();
+                console.log("3. Dados recebidos do Supabase:", itens);
+                
+                const tbody = document.getElementById('catalogo-list');
+                
+                if(!itens || itens.length === 0) {
+                    console.log("4. A lista veio VAZIA.");
+                    tbody.innerHTML = '<tr><td colspan="4">Nenhum item cadastrado ou bloqueado pelo Banco.</td></tr>';
+                    return;
+                }
+                
+                console.log("4. A lista tem " + itens.length + " itens. Desenhando tabela...");
+                tbody.innerHTML = itens.map(item => `
+                    <tr>
+                        <td><strong>${item.nome}</strong></td>
+                        <td>${item.descricao || '-'}</td>
+                        <td>R$ ${parseFloat(item.valor_padrao).toFixed(2)}</td>
+                        <td>
+                            <button class="btn-icon" onclick="editarItem(${item.id})"><i class="fas fa-edit"></i></button>
+                            <button class="btn-icon" onclick="deletarItem(${item.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+                console.log("5. Tabela desenhada com sucesso!");
+                
+            } catch (erro) {
+                console.error("ERRO FATAL AO CARREGAR:", erro);
+                document.getElementById('catalogo-list').innerHTML = '<tr><td colspan="4" style="color:red;">Erro no sistema. Aperte F12 e veja o Console.</td></tr>';
+            }
+        }
+
+        function abrirModalCatalogo(item = null) {
+            document.getElementById('catalogoModal').style.display = 'block';
+            if(item) {
+                document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Item';
+                document.getElementById('itemId').value = item.id;
+                document.getElementById('nomeItem').value = item.nome;
+                document.getElementById('valorItem').value = item.valor_padrao;
+                document.getElementById('descricaoItem').value = item.descricao || '';
+            } else {
+                document.getElementById('modalTitle').innerHTML = '<i class="fas fa-tag"></i> Novo Item';
+                document.getElementById('catalogoForm').reset();
+                document.getElementById('itemId').value = '';
+            }
+        }
+
+        function fecharModalCatalogo() { document.getElementById('catalogoModal').style.display = 'none'; }
+
+        async function editarItem(id) {
+            const itens = await getCatalogo();
+            abrirModalCatalogo(itens.find(i => i.id === id));
+        }
+
+        async function deletarItem(id) {
+            if(confirm('Excluir este item da tabela de preços?')) {
+                await deletarCatalogo(id);
+                carregarCatalogo();
+            }
+        }
+
+        document.getElementById('catalogoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await salvarCatalogo({
+                id: document.getElementById('itemId').value || null,
+                nome: document.getElementById('nomeItem').value,
+                valor_padrao: document.getElementById('valorItem').value,
+                descricao: document.getElementById('descricaoItem').value
+            });
+            fecharModalCatalogo();
+            carregarCatalogo();
+        });
+
+        // Inicia o carregamento
+        carregarCatalogo();
+    </script>
+</body>
+</html>
