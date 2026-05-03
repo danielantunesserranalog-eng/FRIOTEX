@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     await carregarDadosEmpresa();
+    await carregarListaUsuarios();
 });
 
+// LOGICA EMPRESA
 async function carregarDadosEmpresa() {
     try {
         const empresa = await getEmpresa();
@@ -19,6 +21,8 @@ async function carregarDadosEmpresa() {
 
 document.getElementById('empresaForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     
     const empresaData = {
         id: document.getElementById('empresaId').value ? parseInt(document.getElementById('empresaId').value) : null,
@@ -27,20 +31,102 @@ document.getElementById('empresaForm').addEventListener('submit', async function
         telefone: document.getElementById('telefone').value,
         endereco: document.getElementById('endereco').value
     };
-
     try {
         await salvarEmpresa(empresaData);
-        
-        const msg = document.createElement('div');
-        msg.className = 'success-message';
-        msg.textContent = 'Configurações salvas com sucesso!';
-        msg.style.cssText = 'position:fixed; top:20px; right:20px; background:#48bb78; color:white; padding:12px 24px; border-radius:12px; z-index:9999;';
-        document.body.appendChild(msg);
-        setTimeout(() => msg.remove(), 3000);
-        
+        alert('Configurações salvas com sucesso!');
         await carregarDadosEmpresa();
     } catch (error) {
-        alert("Erro ao salvar configurações da empresa.");
-        console.error(error);
+        alert("Erro ao salvar empresa.");
+    }
+    btn.innerHTML = '<i class="fas fa-save"></i> Salvar Empresa';
+});
+
+// LOGICA USUARIOS
+async function carregarListaUsuarios() {
+    const usuarios = await getUsuarios();
+    const tbody = document.getElementById('usuarios-list');
+    
+    if (usuarios.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3">Nenhum usuário cadastrado.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = usuarios.map(u => `
+        <tr>
+            <td style="padding: 10px;"><strong>${u.username}</strong> ${u.must_change_password ? '<span style="color:var(--warning); font-size:10px;" title="Senha Pendente"><i class="fas fa-clock"></i></span>' : ''}</td>
+            <td style="padding: 10px;"><span class="status-badge ${u.role === 'Admin' ? 'status-info' : 'status-warning'}">${u.role}</span></td>
+            <td style="padding: 10px;" class="actions">
+                <button class="btn-icon" onclick="editarUsuario(${u.id}, '${u.username}', '${u.role}')" title="Editar"><i class="fas fa-edit"></i></button>
+                <button class="btn-icon" onclick="resetarSenha(${u.id})" title="Resetar Senha para 12345"><i class="fas fa-key"></i></button>
+                <button class="btn-icon" style="color: var(--danger);" onclick="apagarUsuario(${u.id}, '${u.username}')" title="Excluir"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function abrirModalUsuario() {
+    document.getElementById('usuarioForm').reset();
+    document.getElementById('usuarioId').value = '';
+    document.getElementById('usuarioLogin').readOnly = false;
+    document.getElementById('modalTitleUsuario').innerHTML = '<i class="fas fa-user-plus"></i> Novo Usuário';
+    document.getElementById('usuarioModal').style.display = 'block';
+}
+
+function fecharModalUsuario() {
+    document.getElementById('usuarioModal').style.display = 'none';
+}
+
+function editarUsuario(id, username, role) {
+    document.getElementById('usuarioId').value = id;
+    document.getElementById('usuarioLogin').value = username;
+    document.getElementById('usuarioLogin').readOnly = true; // Login não pode ser mudado fácil
+    document.getElementById('usuarioRole').value = role;
+    document.getElementById('modalTitleUsuario').innerHTML = '<i class="fas fa-user-edit"></i> Editar Permissão';
+    document.getElementById('usuarioModal').style.display = 'block';
+}
+
+document.getElementById('usuarioForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const id = document.getElementById('usuarioId').value;
+    const usr = {
+        id: id ? parseInt(id) : null,
+        username: document.getElementById('usuarioLogin').value.trim(),
+        role: document.getElementById('usuarioRole').value
+    };
+    
+    try {
+        await salvarUsuarioDB(usr);
+        fecharModalUsuario();
+        carregarListaUsuarios();
+        alert('Usuário salvo com sucesso!');
+    } catch (e) {
+        alert('Erro ao salvar. Verifique se o login já existe.');
+        console.error(e);
     }
 });
+
+async function resetarSenha(id) {
+    if(confirm('Tem certeza que deseja RESETAR a senha deste usuário para "12345"?')) {
+        try {
+            await resetarSenhaUsuario(id);
+            alert('Senha resetada com sucesso! No próximo login, o usuário deverá criar uma nova.');
+            carregarListaUsuarios();
+        } catch(e) {
+            alert('Erro ao resetar senha.');
+        }
+    }
+}
+
+async function apagarUsuario(id, username) {
+    if(username === 'ADMIN') { alert('O usuário ADMIN principal não pode ser apagado.'); return; }
+    if(username === localStorage.getItem('usuarioLogado')) { alert('Você não pode apagar a si mesmo enquanto estiver logado.'); return; }
+    
+    if(confirm(`Tem certeza que deseja apagar permanentemente o usuário ${username}?`)) {
+        try {
+            await deletarUsuarioDB(id);
+            carregarListaUsuarios();
+        } catch(e) {
+            alert('Erro ao apagar usuário.');
+        }
+    }
+}

@@ -3,10 +3,24 @@ document.addEventListener('DOMContentLoaded', function() {
     destacarMenuAtivo();
 });
 
+function fazerLogout() {
+    localStorage.removeItem('usuarioLogado');
+    localStorage.removeItem('userRole');
+    const isInPages = window.location.pathname.includes('/pages/');
+    window.location.href = isInPages ? '../login.html' : 'login.html';
+}
+
 function carregarMenu() {
     const currentPath = window.location.pathname;
     const isInPages = currentPath.includes('/pages/');
     const basePath = isInPages ? '../' : '';
+    
+    const userRole = localStorage.getItem('userRole') || 'Técnico';
+    const userName = localStorage.getItem('usuarioLogado') || 'Usuário';
+    
+    // Oculta itens dependendo da permissão
+    const menuFinanceiro = userRole === 'Admin' ? `<li><a href="${basePath}pages/financeiro.html" data-page="financeiro"><i class="fas fa-hand-holding-usd"></i> Financeiro</a></li>` : '';
+    const menuConfig = userRole === 'Admin' ? `<li class="menu-bottom"><a href="${basePath}pages/configuracoes.html" data-page="configuracoes"><i class="fas fa-cog"></i> Configurações / Usuários</a></li>` : '';
     
     const menuHTML = `
         <button class="menu-toggle" onclick="toggleMenu()">
@@ -16,6 +30,10 @@ function carregarMenu() {
             <div class="sidebar-header">
                 <h2><i class="fas fa-snowflake"></i> FRIOTEX</h2>
                 <p>Sistemas de Refrigeração</p>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div><i class="fas fa-user-circle" style="color:var(--primary);"></i> <strong>${userName}</strong><br><span style="color:var(--text-muted)">${userRole}</span></div>
+                    <button onclick="fazerLogout()" style="background: none; border: none; color: var(--danger); cursor: pointer;" title="Sair"><i class="fas fa-power-off"></i></button>
+                </div>
             </div>
             <ul class="menu-items">
                 <li><a href="${basePath}index.html" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
@@ -33,10 +51,10 @@ function carregarMenu() {
                 </li>
                 
                 <li><a href="${basePath}pages/orcamentos.html" data-page="orcamentos"><i class="fas fa-file-invoice-dollar"></i> Orçamentos</a></li>
-                <li><a href="${basePath}pages/financeiro.html" data-page="financeiro"><i class="fas fa-hand-holding-usd"></i> Financeiro</a></li>
+                ${menuFinanceiro}
                 <li><a href="${basePath}pages/relatorios.html" data-page="relatorios"><i class="fas fa-chart-bar"></i> Relatórios</a></li>
                 
-                <li class="menu-bottom"><a href="${basePath}pages/configuracoes.html" data-page="configuracoes"><i class="fas fa-cog"></i> Configurações</a></li>
+                ${menuConfig}
             </ul>
         </div>
     `;
@@ -49,9 +67,7 @@ function carregarMenu() {
 
 function toggleMenu() {
     const sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        sidebar.classList.toggle('active');
-    }
+    if (sidebar) sidebar.classList.toggle('active');
 }
 
 function toggleSubmenu(event, submenuId) {

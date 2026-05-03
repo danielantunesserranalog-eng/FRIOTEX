@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - FRIOTEX</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-main); margin: 0; }
+        .login-box { background: var(--bg-surface); padding: 40px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .login-header { text-align: center; margin-bottom: 30px; }
+        .login-header i { font-size: 40px; color: var(--primary); margin-bottom: 15px; }
+        .login-header h1 { font-size: 24px; color: var(--text-main); margin: 0; }
+        .login-header p { color: var(--text-muted); font-size: 14px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="login-header">
+            <i class="fas fa-snowflake"></i>
+            <h1>Acesso Restrito</h1>
+            <p>Sistemas de Refrigeração</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group" style="padding: 0;">
+                <label>Usuário</label>
+                <input type="text" id="username" placeholder="Ex: DANIEL.RIBEIRO" style="text-transform: uppercase;" required>
+            </div>
+            
+            <div class="form-group" style="padding: 0;">
+                <label>Senha</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+
+            <!-- Este bloco só aparece se o usuário precisar trocar a senha (primeiro acesso) -->
+            <div id="newPasswordBlock" style="display: none;">
+                <div class="form-group" style="padding: 0; margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
+                    <label style="color: var(--warning);"><i class="fas fa-exclamation-triangle"></i> Troca de Senha Obrigatória</label>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Este é seu primeiro acesso. Digite uma nova senha de sua preferência.</p>
+                    <input type="password" id="newPassword" placeholder="Nova Senha Oculta">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; height: 45px; font-size: 16px;">
+                Entrar <i class="fas fa-sign-in-alt"></i>
+            </button>
+            <div id="loginMsg" style="text-align: center; margin-top: 15px; font-size: 13px; color: var(--danger); font-weight: bold;"></div>
+        </form>
+    </div>
+
+    <!-- Script de Autenticação isolado para o Login -->
+    <script>
+        const supabaseUrl = 'https://gaflsobdfcghtvpqcrdk.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhZmxzb2JkZmNnaHR2cHFjcmRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3Nzg1ODUsImV4cCI6MjA5MzM1NDU4NX0.Y64crvMlfCiAcO9Jn6lBFjYeO_LmUQ_xKEM2r0mxaTY';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function gerarHash(senha) {
+            const msgBuffer = new TextEncoder().encode(senha);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        let userRequiresChange = null;
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const msgDiv = document.getElementById('loginMsg');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Autenticando...';
+            msgDiv.innerText = '';
+
+            const user = document.getElementById('username').value.trim().toUpperCase();
+            const pass = document.getElementById('password').value;
+            const newPassInput = document.getElementById('newPassword').value;
+
+            try {
+                // Se já pediu a nova senha
+                if (userRequiresChange) {
+                    if (!newPassInput || newPassInput.length < 4) {
+                        msgDiv.innerText = 'A nova senha deve ter no mínimo 4 caracteres.';
+                        btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
+                        return;
+                    }
+                    const newHash = await gerarHash(newPassInput);
+                    await supabaseClient.from('usuarios').update({ 
+                        password_hash: newHash, 
+                        must_change_password: false 
+                    }).eq('id', userRequiresChange.id);
+                    
+                    iniciarSessao(userRequiresChange.username, userRequiresChange.role);
+                    return;
+                }
+
+                // Busca o usuário e verifica a senha
+                const passHash = await gerarHash(pass);
+                const { data, error } = await supabaseClient.from('usuarios')
+                    .select('*').eq('username', user).eq('password_hash', passHash).single();
+
+                if (error || !data) {
+                    msgDiv.innerText = 'Usuário ou senha incorretos.';
+                    btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
+                    return;
+                }
+
+                // Verifica se é o primeiro acesso
+                if (data.must_change_password) {
+                    userRequiresChange = data;
+                    document.getElementById('newPasswordBlock').style.display = 'block';
+                    document.getElementById('username').readOnly = true;
+                    document.getElementById('password').readOnly = true;
+                    document.getElementById('newPassword').required = true;
+                    msgDiv.innerText = 'Defina uma nova senha para continuar.';
+                    msgDiv.style.color = 'var(--warning)';
+                    btn.innerHTML = 'Salvar e Entrar <i class="fas fa-save"></i>';
+                } else {
+                    iniciarSessao(data.username, data.role);
+                }
+            } catch (err) {
+                msgDiv.innerText = 'Erro no servidor de autenticação.';
+                btn.innerHTML = 'Entrar <i class="fas fa-sign-in-alt"></i>';
+            }
+        });
+
+        function iniciarSessao(username, role) {
+            localStorage.setItem('usuarioLogado', username);
+            localStorage.setItem('userRole', role);
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
