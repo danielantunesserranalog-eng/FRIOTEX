@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // PROTEÇÃO: Se precisa trocar a senha e tentar acessar sub-páginas, chuta de volta pro index
+        // PROTEÇÃO: Se precisa trocar a senha, chuta de volta pro index
         if (localStorage.getItem('precisaTrocarSenha') === 'true' && currentPath.includes('/pages/')) {
             window.location.href = '../index.html';
             return;
@@ -40,16 +40,17 @@ function carregarMenu() {
     const menuConfig = userRole === 'Admin' ? `<li class="menu-bottom"><a href="${basePath}pages/configuracoes.html" data-page="configuracoes"><i class="fas fa-cog"></i> Configurações / Usuários</a></li>` : '';
     
     const menuHTML = `
-        <button class="menu-toggle" onclick="toggleMenu()">
-            <i class="fas fa-bars"></i>
-        </button>
+        <!-- Overlay Escuro para Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMenu()"></div>
+        
+        <!-- Sidebar Desktop / Drawer Mobile -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h2><i class="fas fa-snowflake"></i> FRIOTEX</h2>
                 <p>Sistemas de Refrigeração</p>
-                <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="user-profile-box">
                     <div><i class="fas fa-user-circle" style="color:var(--primary);"></i> <strong>${userName}</strong><br><span style="color:var(--text-muted)">${userRole}</span></div>
-                    <button onclick="fazerLogout()" style="background: none; border: none; color: var(--danger); cursor: pointer;" title="Sair"><i class="fas fa-power-off"></i></button>
+                    <button onclick="fazerLogout()" class="logout-btn" title="Sair"><i class="fas fa-power-off"></i></button>
                 </div>
             </div>
             <ul class="menu-items">
@@ -74,6 +75,24 @@ function carregarMenu() {
                 ${menuConfig}
             </ul>
         </div>
+
+        <!-- Top Header (Apenas Mobile) -->
+        <div class="mobile-header">
+            <div class="mobile-header-title">
+                <i class="fas fa-snowflake" style="color: var(--primary);"></i> FRIOTEX
+            </div>
+            <div class="mobile-header-user" onclick="toggleMenu()">
+                <img src="https://ui-avatars.com/api/?name=${userName}&background=0ea5e9&color=fff&rounded=true&bold=true" alt="Perfil" width="34" height="34" style="border-radius: 50%; border: 2px solid var(--border-color);">
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar (Apenas Mobile) -->
+        <div class="mobile-bottom-nav">
+            <a href="${basePath}index.html" data-page="dashboard"><i class="fas fa-home"></i><span>Início</span></a>
+            <a href="${basePath}pages/clientes.html" data-page="clientes"><i class="fas fa-users"></i><span>Clientes</span></a>
+            <a href="${basePath}pages/servicos.html" data-page="servicos"><i class="fas fa-tools"></i><span>Serviços</span></a>
+            <button onclick="toggleMenu()"><i class="fas fa-bars"></i><span>Menu</span></button>
+        </div>
     `;
     
     const menuContainer = document.getElementById('menu-container');
@@ -84,7 +103,9 @@ function carregarMenu() {
 
 function toggleMenu() {
     const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
     if (sidebar) sidebar.classList.toggle('active');
+    if (overlay) overlay.classList.toggle('active');
 }
 
 function toggleSubmenu(event, submenuId) {
@@ -102,8 +123,8 @@ function toggleSubmenu(event, submenuId) {
 }
 
 function destacarMenuAtivo() {
-    const currentPage = window.location.pathname.split('/').pop();
-    const links = document.querySelectorAll('.menu-items a');
+    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    const links = document.querySelectorAll('.menu-items a, .mobile-bottom-nav a');
     
     links.forEach(link => {
         const href = link.getAttribute('href');
@@ -126,13 +147,3 @@ function destacarMenuAtivo() {
         }
     });
 }
-
-document.addEventListener('click', function(e) {
-    const sidebar = document.getElementById('sidebar');
-    const toggle = document.querySelector('.menu-toggle');
-    if (window.innerWidth <= 768 && sidebar && sidebar.classList.contains('active')) {
-        if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
-            sidebar.classList.remove('active');
-        }
-    }
-});
