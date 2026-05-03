@@ -33,6 +33,8 @@ function renderizarServicos(servicos) {
         return;
     }
     
+    const userRole = localStorage.getItem('userRole') || 'Técnico';
+    
     tbody.innerHTML = servicos.map(s => {
         const valTotal = parseFloat(s.valor || 0);
         let valPagoDisplay = '';
@@ -46,15 +48,23 @@ function renderizarServicos(servicos) {
             }
         }
 
+        // ESCONDE O VALOR PARA O TÉCNICO
+        let valorHTML = '';
+        if (userRole === 'Admin') {
+            valorHTML = `<strong>R$ ${valTotal.toFixed(2)}</strong>${valPagoDisplay}`;
+        } else {
+            valorHTML = `<span style="color:var(--text-muted);"><i class="fas fa-lock"></i> Restrito</span>`;
+        }
+
         return `
             <tr>
                 <td><strong>${s.clienteNome}</strong><br><small style="color:var(--text-muted)">${s.tipo}</small></td>
                 <td>${new Date(s.data).toLocaleDateString()} <br><small style="color:var(--primary)"><i class="fas fa-clock"></i> ${s.hora || 'Sem hora'}</small></td>
                 <td><i class="fas fa-user-circle"></i> ${s.colaboradorNome}</td>
                 <td><span class="status-badge ${s.status === 'Concluído' ? 'status-success' : s.status === 'Em andamento' ? 'status-warning' : 'status-info'}">${s.status}</span></td>
-                <td><strong>R$ ${valTotal.toFixed(2)}</strong>${valPagoDisplay}</td>
+                <td>${valorHTML}</td>
                 <td class="actions">
-                    ${s.status !== 'Concluído' ? `<button class="btn-icon" style="color:var(--success)" onclick="abrirModalConcluir(${s.id})" title="Concluir Serviço"><i class="fas fa-check-double"></i></button>` : ''}
+                    ${s.status !== 'Concluído' && userRole === 'Admin' ? `<button class="btn-icon" style="color:var(--success)" onclick="abrirModalConcluir(${s.id})" title="Concluir Serviço"><i class="fas fa-check-double"></i></button>` : ''}
                     <button class="btn-icon" onclick="editarServico(${s.id})" title="Editar"><i class="fas fa-edit"></i></button>
                     <button class="btn-icon" onclick="excluirServico(${s.id})" title="Excluir"><i class="fas fa-trash"></i></button>
                     <button class="btn-icon" onclick="verDetalhesServico(${s.id})" title="Detalhes"><i class="fas fa-info-circle"></i></button>
@@ -65,10 +75,11 @@ function renderizarServicos(servicos) {
 }
 
 // ==========================================
-// CRUD BÁSICO DE SERVIÇOS
+// CRUD BÁSICO DE SERVIÇO
 // ==========================================
 async function abrirModalServico(servico = null) {
     const form = document.getElementById('servicoForm');
+    const userRole = localStorage.getItem('userRole') || 'Técnico';
     
     const clientes = await getClientes();
     document.getElementById('clienteSelect').innerHTML = '<option value="">Selecione um cliente...</option>' + 
@@ -77,7 +88,7 @@ async function abrirModalServico(servico = null) {
     const colabs = await getColaboradores();
     document.getElementById('colaboradorSelect').innerHTML = '<option value="">Selecione um técnico...</option>' + 
         colabs.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-    
+        
     if (servico) {
         document.getElementById('modalTitleServico').innerHTML = '<i class="fas fa-edit"></i> Editar Serviço';
         document.getElementById('servicoId').value = servico.id;
@@ -96,11 +107,21 @@ async function abrirModalServico(servico = null) {
         document.getElementById('dataServico').value = new Date().toISOString().split('T')[0];
         document.getElementById('status').value = 'Pendente';
     }
+
+    // ESCONDE O CAMPO VALOR SE FOR TÉCNICO
+    if (userRole !== 'Admin') {
+        document.getElementById('valor').closest('.form-group').style.display = 'none';
+        if (!servico) document.getElementById('valor').value = 0; // Preenche zero por padrão
+    } else {
+        document.getElementById('valor').closest('.form-group').style.display = 'block';
+    }
     
     document.getElementById('servicoModal').style.display = 'block';
 }
 
-function fecharModalServico() { document.getElementById('servicoModal').style.display = 'none'; }
+function fecharModalServico() {
+    document.getElementById('servicoModal').style.display = 'none';
+}
 
 async function editarServico(id) {
     const servico = servicosGlobais.find(s => s.id === id);
@@ -140,7 +161,7 @@ document.getElementById('servicoForm')?.addEventListener('submit', async functio
 function abrirModalConcluir(id) {
     const servico = servicosGlobais.find(s => s.id === id);
     if(!servico) return;
-
+    
     valorTotalServicoAtual = parseFloat(servico.valor) || 0;
     document.getElementById('concluirValorTotalDisplay').innerText = `R$ ${valorTotalServicoAtual.toFixed(2)}`;
     
@@ -154,7 +175,9 @@ function abrirModalConcluir(id) {
     document.getElementById('concluirModal').style.display = 'block';
 }
 
-function fecharModalConcluir() { document.getElementById('concluirModal').style.display = 'none'; }
+function fecharModalConcluir() {
+    document.getElementById('concluirModal').style.display = 'none';
+}
 
 function adicionarLinhaPgto(valorPadrao = 0) {
     const container = document.getElementById('container-pgtos');
@@ -253,7 +276,7 @@ document.getElementById('concluirForm')?.addEventListener('submit', async functi
     try {
         await concluirServicoDB(id, formaPgtoString, totalPago, dataVencimento, statusPgto);
         fecharModalConcluir();
-        await carregarServicos(); 
+        await carregarServicos();
         
         const msg = document.createElement('div');
         msg.textContent = 'Serviço concluído com sucesso!';
@@ -272,8 +295,17 @@ document.getElementById('concluirForm')?.addEventListener('submit', async functi
 async function verDetalhesServico(id) {
     const servico = servicosGlobais.find(s => s.id === id);
     const empresa = await getEmpresa();
+    const userRole = localStorage.getItem('userRole') || 'Técnico';
     
     if (servico) {
+        // ESCONDE DETALHES DE VALOR PARA TÉCNICO
+        const valorDetalhe = userRole === 'Admin' ? `<strong>R$ ${parseFloat(servico.valor).toFixed(2)}</strong>` : `<span style="color:var(--text-muted);"><i class="fas fa-lock"></i> Restrito</span>`;
+        
+        const pgtoDetalhe = (userRole === 'Admin' && servico.forma_pagamento) ? `
+        <div class="form-row" style="padding:0; margin-top:15px;">
+            <div class="detail-item" style="grid-column: 1 / -1;"><label>Pagamentos Registrados:</label><p style="color: var(--success); font-weight: 600;">${servico.forma_pagamento}</p></div>
+        </div>` : '';
+
         document.getElementById('detalhesContent').innerHTML = `
             <div style="padding: 20px;">
                 <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; margin-bottom: 15px; text-align: center;">
@@ -289,12 +321,9 @@ async function verDetalhesServico(id) {
                 </div>
                 <div class="form-row" style="padding:0;">
                     <div class="detail-item"><label>Status:</label><p><span class="status-badge status-info">${servico.status}</span></p></div>
-                    <div class="detail-item"><label>Valor Total:</label><p><strong>R$ ${parseFloat(servico.valor).toFixed(2)}</strong></p></div>
+                    <div class="detail-item"><label>Valor Total:</label><p>${valorDetalhe}</p></div>
                 </div>
-                ${servico.forma_pagamento ? `
-                <div class="form-row" style="padding:0; margin-top:15px;">
-                    <div class="detail-item" style="grid-column: 1 / -1;"><label>Pagamentos Registrados:</label><p style="color: var(--success); font-weight: 600;">${servico.forma_pagamento}</p></div>
-                </div>` : ''}
+                ${pgtoDetalhe}
                 <div class="detail-item" style="margin-top: 15px;"><label>Descrição:</label><p style="white-space: pre-line;">${servico.descricao || 'Nenhuma descrição fornecida'}</p></div>
             </div>
         `;
@@ -302,7 +331,9 @@ async function verDetalhesServico(id) {
     }
 }
 
-function fecharDetalhesModal() { document.getElementById('detalhesModal').style.display = 'none'; }
+function fecharDetalhesModal() {
+    document.getElementById('detalhesModal').style.display = 'none';
+}
 
 // Inicializa a página
 carregarServicos();

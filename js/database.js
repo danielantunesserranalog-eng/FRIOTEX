@@ -178,15 +178,18 @@ async function deletarServico(id) {
 // CRUD ORÇAMENTOS
 // ==========================================
 async function getOrcamentos() {
-    const { data, error } = await supabaseClient.from('orcamentos').select('*, clientes(nome)').order('data', { ascending: false });
+    // Buscamos o telefone do cliente também para o WhatsApp
+    const { data, error } = await supabaseClient.from('orcamentos').select('*, clientes(nome, telefone)').order('data', { ascending: false });
     return (data || []).map(o => ({
         ...o,
-        clienteNome: o.clientes ? o.clientes.nome : 'Desconhecido'
+        clienteNome: o.clientes ? o.clientes.nome : 'Desconhecido',
+        clienteTelefone: o.clientes ? o.clientes.telefone : ''
     }));
 }
 
 async function salvarOrcamento(orcamento) {
     delete orcamento.clienteNome;
+    delete orcamento.clienteTelefone;
     if (orcamento.id) {
         const { data, error } = await supabaseClient.from('orcamentos').update(orcamento).eq('id', orcamento.id).select();
         if (error) throw error; return data;

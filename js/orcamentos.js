@@ -32,10 +32,8 @@ function renderizarAbaOrcamentos() {
     tbody.innerHTML = filtrados.map(orcamento => {
         const itensDescricao = (orcamento.itens || []).map(i => i.descricao).join(', ');
         const descResumida = itensDescricao.length > 50 ? itensDescricao.substring(0, 50) + '...' : (itensDescricao || 'Sem itens');
-
-        // Se já foi aceito, remove o botão de aprovar para evitar duplicação!
         const btnAprovar = orcamento.status !== 'Aceito' ? `<button class="btn-icon" style="color: var(--success);" onclick="abrirModalAprovar(${orcamento.id})" title="Aprovar e Gerar Serviço"><i class="fas fa-check-circle"></i></button>` : `<span class="badge" style="background: rgba(16,185,129,0.1); color: var(--success);">Aceito</span>`;
-
+        
         return `
             <tr>
                 <td><strong>#${orcamento.id.toString().padStart(5, '0')}</strong></td>
@@ -46,7 +44,8 @@ function renderizarAbaOrcamentos() {
                 <td class="actions">
                     <button class="btn-icon" style="color: var(--text-main);" onclick="visualizarOrcamento(${orcamento.id})" title="Visualizar na tela"><i class="fas fa-eye"></i></button>
                     ${btnAprovar}
-                    <button class="btn-icon" style="color: var(--primary);" onclick="gerarPDF(${orcamento.id})" title="Gerar PDF"><i class="fas fa-file-pdf"></i></button>
+                    <button class="btn-icon" style="color: #25D366;" onclick="enviarWhatsApp(${orcamento.id})" title="Enviar PDF pelo WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                    <button class="btn-icon" style="color: var(--primary);" onclick="gerarPDF(${orcamento.id})" title="Baixar PDF"><i class="fas fa-file-pdf"></i></button>
                     <button class="btn-icon" style="color: var(--danger);" onclick="excluirOrcamento(${orcamento.id})" title="Excluir"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
@@ -54,7 +53,9 @@ function renderizarAbaOrcamentos() {
     }).join('');
 }
 
+// ==========================================
 // LÓGICA DO ORÇAMENTO (CRIAR E EDITAR)
+// ==========================================
 async function abrirModalOrcamento() {
     const clientes = await getClientes();
     catalogoGlobal = await getCatalogo();
@@ -174,15 +175,15 @@ async function excluirOrcamento(id) {
 }
 
 // ==========================================
-// APROVAR ORÇAMENTO (GERAR SERVIÇO) E MARCAR COMO ACEITO
+// APROVAR ORÇAMENTO E WHATSAPP
 // ==========================================
 async function abrirModalAprovar(orcamentoId) {
     const colabs = await getColaboradores();
     document.getElementById('aprovColaborador').innerHTML = '<option value="">Selecione um técnico...</option>' + 
         colabs.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
         
-    const orcamentoOriginal = orcGlobais.find(o => o.id === orcamentoId);    
-        
+    const orcamentoOriginal = orcGlobais.find(o => o.id === orcamentoId);
+    
     document.getElementById('aprovarForm').reset();
     document.getElementById('aprovOrcamentoId').value = orcamentoId;
     document.getElementById('aprovData').value = new Date().toISOString().split('T')[0];
@@ -223,7 +224,6 @@ document.getElementById('aprovarForm').addEventListener('submit', async function
     
     try {
         await salvarServico(novoServico);
-        // Atualiza o orçamento para "Aceito" no banco, para sumir da lista de Pendentes
         await salvarOrcamento({ id: orcamentoOriginal.id, status: 'Aceito' });
         
         alert('Serviço agendado e orçamento transferido para o Histórico!');
@@ -234,6 +234,34 @@ document.getElementById('aprovarForm').addEventListener('submit', async function
         console.error(err);
     }
 });
+
+async function enviarWhatsApp(id) {
+    const orcamento = orcGlobais.find(o => o.id === id);
+    if (!orcamento) return;
+    
+    // Gera e baixa o PDF localmente
+    await gerarPDF(id);
+    
+    // Formata o número (remove traços e parênteses)
+    let numero = orcamento.clienteTelefone ? orcamento.clienteTelefone.replace(/\D/g, '') : '';
+    
+    if (numero && numero.length >= 10) {
+        // Se for número nacional, adiciona o 55 do Brasil
+        if (numero.length === 10 || numero.length === 11) {
+            numero = '55' + numero;
+        }
+        
+        const msg = `Olá, ${orcamento.clienteNome}! Tudo bem?\n\nSegue em anexo o *Orçamento #${orcamento.id.toString().padStart(5, '0')}* referente aos nossos serviços, no valor total de *R$ ${parseFloat(orcamento.valor).toFixed(2)}*.\n\nEstou enviando o arquivo PDF com todos os detalhes. Qualquer dúvida, estou à disposição!`;
+        const url = `https://api.whatsapp.com/send?phone=${numero}&text=${encodeURIComponent(msg)}`;
+        
+        // Aguarda 1,5 segundos para o navegador terminar de baixar o PDF e depois abre a nova aba do WhatsApp
+        setTimeout(() => {
+            window.open(url, '_blank');
+        }, 1500);
+    } else {
+        alert('O PDF foi gerado! Porém, este cliente não tem um telefone válido cadastrado para abrir o WhatsApp automaticamente.');
+    }
+}
 
 // ==========================================
 // VISUALIZAR ORÇAMENTO & PDF
@@ -357,7 +385,8 @@ async function gerarPDF(id) {
     `;
     pdfContainer.style.display = 'block';
     
-    html2pdf().set({
+    // Retornamos a promessa para o WhatsApp saber quando terminou de baixar
+    return html2pdf().set({
         margin: 0, filename: `Orcamento_${orcamento.id}.pdf`, image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { scale: 3, useCORS: true }, jsPDF: { unit: 'px', format: [794, 1123], orientation: 'portrait' }
     }).from(document.getElementById('documento-pdf')).save().then(() => {
