@@ -1,10 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // TRAVA DE SEGURANÇA: Verifica se a pessoa está logada
-    // Só faz a verificação se NÃO estiver na página de login para evitar loop
     const currentPath = window.location.pathname;
+    
     if (!currentPath.includes('login.html')) {
+        // Verifica se está logado
         if (!localStorage.getItem('usuarioLogado')) {
-            fazerLogout(); // Expulsa para a tela de login
+            fazerLogout();
+            return;
+        }
+        
+        // PROTEÇÃO: Se precisa trocar a senha e tentar acessar sub-páginas, chuta de volta pro index
+        if (localStorage.getItem('precisaTrocarSenha') === 'true' && currentPath.includes('/pages/')) {
+            window.location.href = '../index.html';
             return;
         }
     }
@@ -16,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function fazerLogout() {
     localStorage.removeItem('usuarioLogado');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('precisaTrocarSenha');
+    localStorage.removeItem('userId');
     const isInPages = window.location.pathname.includes('/pages/');
     window.location.href = isInPages ? '../login.html' : 'login.html';
 }
@@ -28,7 +36,6 @@ function carregarMenu() {
     const userRole = localStorage.getItem('userRole') || 'Técnico';
     const userName = localStorage.getItem('usuarioLogado') || 'Usuário';
     
-    // Oculta itens dependendo da permissão
     const menuFinanceiro = userRole === 'Admin' ? `<li><a href="${basePath}pages/financeiro.html" data-page="financeiro"><i class="fas fa-hand-holding-usd"></i> Financeiro</a></li>` : '';
     const menuConfig = userRole === 'Admin' ? `<li class="menu-bottom"><a href="${basePath}pages/configuracoes.html" data-page="configuracoes"><i class="fas fa-cog"></i> Configurações / Usuários</a></li>` : '';
     

@@ -14,6 +14,35 @@
 <body>
     <div id="menu-container"></div>
     
+    <!-- Modal Troca de Senha Obrigatória -->
+    <div id="trocarSenhaModal" class="modal" style="background: rgba(15, 23, 42, 0.98); z-index: 9999;">
+        <div class="modal-content" style="max-width: 400px; margin-top: 10vh; border: 1px solid var(--warning);">
+            <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+                <h2 style="color: var(--warning); text-align: center;"><i class="fas fa-shield-alt"></i> Segurança</h2>
+            </div>
+            <form id="trocarSenhaForm">
+                <div style="padding: 10px 24px 20px 24px;">
+                    <p style="font-size: 14px; color: var(--text-main); margin-bottom: 20px; text-align: center;">
+                        Este é o seu primeiro acesso. Por favor, crie uma nova senha de uso pessoal.
+                    </p>
+                    <div class="form-group" style="padding: 0;">
+                        <label>Nova Senha</label>
+                        <input type="password" id="novaSenha" required minlength="5" placeholder="Mínimo de 5 caracteres">
+                    </div>
+                    <div class="form-group" style="padding: 0;">
+                        <label>Confirme a Nova Senha</label>
+                        <input type="password" id="confirmarSenha" required placeholder="Repita a senha">
+                    </div>
+                </div>
+                <div class="form-actions" style="justify-content: center; background: transparent; border-top: none; padding-top: 0;">
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; height: 45px; background: var(--warning); border-color: var(--warning); color: #000; font-weight: bold;">
+                        Salvar e Acessar o Sistema
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <main class="main-content">
         <div class="dashboard">
             <div class="welcome-section">
@@ -23,7 +52,6 @@
                 </div>
                 <div class="date-time" id="currentDateTime"></div>
             </div>
-
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon" style="background: rgba(14, 165, 233, 0.1);">
@@ -82,11 +110,10 @@
                     </div>
                 </div>
             </div>
-
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; margin-top: 20px;">
                 <div class="recent-services" style="background: var(--bg-surface); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
                     <div class="section-header">
-                        <h2><i class="fas fa-chart-bar"></i> Receitas dos Últimos 6 Meses</h2>
+                        <h2><i class="fas fa-chart-bar"></i> Receitas dos últimos 6 Meses</h2>
                     </div>
                     <canvas id="dashboardChart" style="max-height: 280px; width: 100%;"></canvas>
                 </div>
@@ -114,7 +141,7 @@
             </div>
         </div>
     </main>
-
+    
     <script src="js/database.js"></script>
     <script src="js/menu.js"></script>
     <script src="js/clientes.js"></script>
@@ -138,7 +165,6 @@
             let faturamentoTotal = 0;
             let totalPendente = 0;
             let qtdServicosComValor = 0;
-
             servicos.forEach(s => {
                 const valTotal = parseFloat(s.valor || 0);
                 if (valTotal > 0) qtdServicosComValor++;
@@ -146,22 +172,18 @@
                 if (s.data && s.data.startsWith(mesAtual)) {
                     faturamentoMes += valTotal;
                 }
-
                 let valPago = s.valor_pago !== null && s.valor_pago !== undefined ? parseFloat(s.valor_pago) : (s.status_pagamento === 'Pago' ? valTotal : 0);
                 if(valPago > valTotal) valPago = valTotal;
                 
                 let valPendente = valTotal - valPago;
                 if(valPendente < 0) valPendente = 0;
-
                 faturamentoTotal += valPago;
                 totalPendente += valPendente;
             });
-
             document.getElementById('total-clientes').textContent = clientes.length;
             document.getElementById('servicos-andamento').textContent = servicos.filter(s => s.status !== 'Concluído').length;
             
             const formataNum = (val) => val.toFixed(2);
-
             document.getElementById('faturamento-mes').textContent = `R$ ${formataNum(faturamentoMes)}`;
             document.getElementById('faturamento-total').textContent = `R$ ${formataNum(faturamentoTotal)}`;
             document.getElementById('total-pendente').textContent = `R$ ${formataNum(totalPendente)}`;
@@ -187,10 +209,8 @@
                     </tr>
                 `).join('');
             }
-
             desenharGraficoDashboard(servicos);
         }
-
         function desenharGraficoDashboard(servicos) {
             const meses = {};
             const ultimos6Meses = [];
@@ -203,7 +223,6 @@
                 ultimos6Meses.push({ chave, nome: nomeMes, total: 0 });
                 meses[chave] = 0;
             }
-
             servicos.forEach(s => {
                 if(!s.data) return;
                 const mesServico = s.data.substring(0, 7);
@@ -211,10 +230,8 @@
                     meses[mesServico] += parseFloat(s.valor || 0);
                 }
             });
-
             const labels = ultimos6Meses.map(m => m.nome);
             const dados = ultimos6Meses.map(m => meses[m.chave]);
-
             const ctx = document.getElementById('dashboardChart').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
@@ -229,21 +246,70 @@
                         borderRadius: 4
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
+                options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
+                    scales: {
+                         y: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
                         x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                    } 
-                }
+                    }
+                 }
             });
         }
         
         atualizarDataHora();
         setInterval(atualizarDataHora, 1000);
         carregarEstatisticas();
+    </script>
+    
+    <script>
+        // --- LÓGICA DA TELA DE TROCA DE SENHA OBRIGATÓRIA ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('precisaTrocarSenha') === 'true') {
+                document.getElementById('trocarSenhaModal').style.display = 'block';
+            }
+        });
+
+        document.getElementById('trocarSenhaForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senha1 = document.getElementById('novaSenha').value;
+            const senha2 = document.getElementById('confirmarSenha').value;
+            const btn = e.target.querySelector('button');
+
+            if (senha1 !== senha2) {
+                alert('As senhas digitadas não são iguais!');
+                return;
+            }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
+            btn.disabled = true;
+
+            try {
+                // Transforma a nova senha em Criptografia
+                const msgBuffer = new TextEncoder().encode(senha1);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashFinal = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+                const userId = localStorage.getItem('userId');
+                
+                // Salva no banco de dados
+                await atualizarSenhaUsuario(userId, hashFinal);
+
+                alert('Senha alterada com sucesso! Bem-vindo.');
+                
+                // Remove as travas e libera o sistema
+                localStorage.removeItem('precisaTrocarSenha');
+                document.getElementById('trocarSenhaModal').style.display = 'none';
+                
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao atualizar a senha no banco de dados.');
+                btn.innerHTML = 'Salvar e Acessar o Sistema';
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>

@@ -45,6 +45,14 @@ async function resetarSenhaUsuario(id) {
     if (error) throw error;
 }
 
+async function atualizarSenhaUsuario(id, novaSenhaHash) {
+    const { error } = await supabaseClient.from('users').update({
+        hash_da_senha: novaSenhaHash,
+        deve_alterar_senha: false
+    }).eq('id', id);
+    if (error) throw error;
+}
+
 async function deletarUsuarioDB(id) {
     const { error } = await supabaseClient.from('users').delete().eq('id', id);
     if (error) throw error;
